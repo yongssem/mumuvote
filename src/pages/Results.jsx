@@ -100,6 +100,12 @@ export default function Results() {
           투표 화면으로
         </button>
       </div>
+
+      <div className="mt-4 text-center">
+        <button className="btn-ghost" onClick={() => nav(`/elections/${id}/results`)}>
+          🧮 전체 반 합산 결과 보기
+        </button>
+      </div>
     </Page>
   )
 }

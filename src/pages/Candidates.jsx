@@ -10,6 +10,26 @@ export default function Candidates() {
   const [election, setElection] = useState(null)
   const [klass, setKlass] = useState(null)
   const [detail, setDetail] = useState(null)
+  const [copied, setCopied] = useState(false)
+
+  // 개별 투표(자기 기기) 비밀 링크
+  const selfLink = `${window.location.origin}/self/${id}/${classId}`
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(selfLink)
+    } catch {
+      // clipboard 미지원 환경 대비 fallback
+      const ta = document.createElement('textarea')
+      ta.value = selfLink
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   useEffect(() => {
     getElection(id).then(setElection)
@@ -57,9 +77,40 @@ export default function Candidates() {
         ))}
       </div>
 
-      <div className="card p-5 mt-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+      {/* 개별 투표(자기 기기) 링크 공유 — 공개수업 당일 각자 태블릿으로 투표 */}
+      <div className="card p-5 mt-8 border-primary/30 bg-primary/5">
+        <div className="flex items-start gap-3">
+          <span className="text-2xl">📱</span>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-lg">개별 투표 (자기 기기)</p>
+            <p className="text-slate-500 text-sm mt-0.5">
+              이 <b>비밀 링크</b>를 학생들에게 공유하면, 각자 자기 태블릿으로 이름을 선택해 비밀
+              투표를 합니다. 결과는 이 반으로 집계돼요.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 mt-3">
+              <input
+                className="input flex-1 text-sm font-mono bg-white"
+                readOnly
+                value={selfLink}
+                onFocus={(e) => e.target.select()}
+              />
+              <button className="btn-primary whitespace-nowrap" onClick={copyLink}>
+                {copied ? '✓ 복사됨' : '링크 복사'}
+              </button>
+              <button
+                className="btn-ghost whitespace-nowrap"
+                onClick={() => window.open(selfLink, '_blank')}
+              >
+                열어보기
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="card p-5 mt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div>
-          <p className="font-bold text-lg">투표 준비 완료</p>
+          <p className="font-bold text-lg">한 대로 진행 (키오스크)</p>
           <p className="text-slate-500 text-sm">
             투표 방식: {election.voteMode === 'ranked' ? '순위투표 (1·2·3등)' : '단순 선택'} · 남은
             투표자 {remaining}명
@@ -70,6 +121,15 @@ export default function Candidates() {
           onClick={() => nav(`/elections/${id}/class/${classId}/vote`)}
         >
           🗳️ 투표 시작
+        </button>
+      </div>
+
+      <div className="mt-4 text-center">
+        <button
+          className="btn-ghost"
+          onClick={() => nav(`/elections/${id}/results`)}
+        >
+          🧮 전체 반 합산 결과 보기
         </button>
       </div>
 
