@@ -5,7 +5,9 @@ import ElectionNew from './pages/ElectionNew'
 import ClassSetup from './pages/ClassSetup'
 import Candidates from './pages/Candidates'
 import Voting from './pages/Voting'
+import SelfVote from './pages/SelfVote'
 import Results from './pages/Results'
+import ResultsAll from './pages/ResultsAll'
 
 // 무무보트 라우팅
 export default function App() {
@@ -18,6 +20,10 @@ export default function App() {
       <Route path="/elections/:id/class/:classId/candidates" element={<Candidates />} />
       <Route path="/elections/:id/class/:classId/vote" element={<Voting />} />
       <Route path="/elections/:id/class/:classId/results" element={<Results />} />
+      {/* 전체 결과(반별 집계·합산) */}
+      <Route path="/elections/:id/results" element={<ResultsAll />} />
+      {/* 개별 투표(자기 기기·비밀 링크) */}
+      <Route path="/self/:id/:classId" element={<SelfVote />} />
       <Route path="*" element={<Landing />} />
     </Routes>
   )

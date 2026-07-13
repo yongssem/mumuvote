@@ -11,9 +11,11 @@ import {
   collection,
   doc,
   addDoc,
+  setDoc,
   getDoc,
   getDocs,
   updateDoc,
+  onSnapshot,
   serverTimestamp,
 } from 'firebase/firestore'
 
@@ -69,6 +71,14 @@ export async function getClass(electionId, classId) {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null
 }
 
+// 한 선거의 모든 반 목록 (합산 결과용)
+export async function listClasses(electionId) {
+  const snap = await getDocs(collection(db, ROOT, electionId, 'classes'))
+  const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+  rows.sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0))
+  return rows
+}
+
 export async function updateVoters(electionId, classId, voters) {
   await updateDoc(doc(db, ROOT, electionId, 'classes', classId), { voters })
 }
@@ -86,6 +96,35 @@ export async function getBallots(electionId, classId) {
     collection(db, ROOT, electionId, 'classes', classId, 'ballots')
   )
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+}
+
+// ── 개별 투표(자기 기기 · 비밀 링크) ────────────────────
+// 학생이 각자 태블릿으로 투표. 문서 id를 voterId로 고정해 1인 1표를 보장하고,
+// voters 배열(공유 상태)을 건드리지 않아 동시 투표에도 유실이 없다.
+export async function submitSelfBallot(electionId, classId, voter, ballot) {
+  await setDoc(
+    doc(db, ROOT, electionId, 'classes', classId, 'ballots', voter.id),
+    { voterId: voter.id, voterName: voter.name, ...ballot, createdAt: serverTimestamp() }
+  )
+}
+
+// 이미 투표한 voterId 집합을 실시간 구독 (중복 방지·진행률). unsubscribe 반환.
+export function subscribeVotedIds(electionId, classId, cb) {
+  return onSnapshot(
+    collection(db, ROOT, electionId, 'classes', classId, 'ballots'),
+    (snap) => cb(new Set(snap.docs.map((d) => d.data().voterId || d.id)))
+  )
+}
+
+// 선거 전체(모든 반)의 투표지를 반별로 수집 (합산 결과용)
+export async function getAllBallots(electionId) {
+  const classes = await listClasses(electionId)
+  const out = []
+  for (const k of classes) {
+    const ballots = await getBallots(electionId, k.id)
+    out.push({ klass: k, ballots })
+  }
+  return out
 }
 
 // ── 결과 집계 ────────────────────────────────────────
