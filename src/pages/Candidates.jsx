@@ -1,0 +1,114 @@
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import Page from '../components/Page'
+import { getElection, getClass } from '../lib/elections'
+
+// 입후보자 관찰 화면 — 카드 클릭 시 공약·포스터 상세 보기, 하단에 투표시작
+export default function Candidates() {
+  const { id, classId } = useParams()
+  const nav = useNavigate()
+  const [election, setElection] = useState(null)
+  const [klass, setKlass] = useState(null)
+  const [detail, setDetail] = useState(null)
+
+  useEffect(() => {
+    getElection(id).then(setElection)
+    getClass(id, classId).then(setKlass)
+  }, [id, classId])
+
+  if (!election) return <Page title="불러오는 중…" />
+
+  const remaining = klass?.voters?.filter((v) => !v.hasVoted).length ?? 0
+
+  return (
+    <Page
+      title="입후보자 살펴보기"
+      subtitle={`${election.name}${klass ? ' · ' + klass.name : ''}`}
+    >
+      <p className="text-slate-500 mb-4">
+        후보 카드를 눌러 <b>공약과 포스터</b>를 확인하세요.
+      </p>
+
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {election.candidates.map((c) => (
+          <button
+            key={c.id}
+            onClick={() => setDetail(c)}
+            className="card overflow-hidden text-left hover:border-primary hover:shadow-md transition group"
+          >
+            <div className="aspect-[4/3] bg-slate-100 relative flex items-center justify-center overflow-hidden">
+              {c.posterUrl ? (
+                <img src={c.posterUrl} alt={c.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="text-slate-300 text-5xl font-black">{c.number}</div>
+              )}
+              <span className="absolute top-2 left-2 bg-primary text-white text-xs font-bold rounded-full px-2.5 py-1">
+                기호 {c.number}번
+              </span>
+            </div>
+            <div className="p-4">
+              <h3 className="font-bold text-lg group-hover:text-primary">{c.name}</h3>
+              {c.slogan && <p className="text-sm text-slate-500 mt-1 line-clamp-2">{c.slogan}</p>}
+              <span className="inline-block mt-3 text-sm text-primary font-semibold">
+                공약 보기 →
+              </span>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      <div className="card p-5 mt-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div>
+          <p className="font-bold text-lg">투표 준비 완료</p>
+          <p className="text-slate-500 text-sm">
+            투표 방식: {election.voteMode === 'ranked' ? '순위투표 (1·2·3등)' : '단순 선택'} · 남은
+            투표자 {remaining}명
+          </p>
+        </div>
+        <button
+          className="btn-accent text-lg px-8 py-4 w-full sm:w-auto"
+          onClick={() => nav(`/elections/${id}/class/${classId}/vote`)}
+        >
+          🗳️ 투표 시작
+        </button>
+      </div>
+
+      {/* 후보 상세 모달 */}
+      {detail && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-20"
+          onClick={() => setDetail(null)}
+        >
+          <div
+            className="card w-full max-w-lg max-h-[85vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {detail.posterUrl && (
+              <img
+                src={detail.posterUrl}
+                alt={detail.name}
+                className="w-full max-h-72 object-cover rounded-t-2xl"
+              />
+            )}
+            <div className="p-6">
+              <span className="inline-block bg-primary text-white text-xs font-bold rounded-full px-2.5 py-1">
+                기호 {detail.number}번
+              </span>
+              <h2 className="text-2xl font-black mt-2">{detail.name}</h2>
+              {detail.slogan && <p className="text-primary font-semibold mt-1">“{detail.slogan}”</p>}
+              <div className="mt-4">
+                <h3 className="font-bold text-sm text-slate-500 mb-1">공약</h3>
+                <p className="whitespace-pre-wrap text-ink leading-relaxed">
+                  {detail.pledges || '등록된 공약이 없습니다.'}
+                </p>
+              </div>
+              <button className="btn-ghost w-full mt-6" onClick={() => setDetail(null)}>
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </Page>
+  )
+}
