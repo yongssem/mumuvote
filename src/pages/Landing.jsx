@@ -19,6 +19,14 @@ export default function Landing() {
         {/* 가독성 오버레이 */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/70" />
 
+        {/* 슈퍼 관리자 (우상단) */}
+        <button
+          className="absolute top-4 right-4 z-20 rounded-full bg-white/15 backdrop-blur px-4 py-2 text-white/90 text-sm font-semibold hover:bg-white/25 transition"
+          onClick={() => nav('/admin')}
+        >
+          🔑 슈퍼 관리자
+        </button>
+
         {/* 콘텐츠 */}
         <div className="relative z-10 text-center px-6 py-24 max-w-2xl">
           <div className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur px-4 py-1.5 text-white/90 text-sm font-semibold mb-6">

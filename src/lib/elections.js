@@ -15,6 +15,7 @@ import {
   getDoc,
   getDocs,
   updateDoc,
+  deleteDoc,
   onSnapshot,
   serverTimestamp,
 } from 'firebase/firestore'
@@ -125,6 +126,33 @@ export async function getAllBallots(electionId) {
     out.push({ klass: k, ballots })
   }
   return out
+}
+
+// ── 슈퍼 관리자 (삭제) ────────────────────────────────
+// 한 반의 투표지 전부 + 반 문서 삭제
+export async function deleteClass(electionId, classId) {
+  const bsnap = await getDocs(
+    collection(db, ROOT, electionId, 'classes', classId, 'ballots')
+  )
+  for (const b of bsnap.docs) await deleteDoc(b.ref)
+  await deleteDoc(doc(db, ROOT, electionId, 'classes', classId))
+}
+
+// 선거 삭제 — 하위 반·투표지까지 재귀 정리 후 선거 문서 삭제
+// (Firestore는 하위 컬렉션을 자동 삭제하지 않으므로 직접 지운다.)
+export async function deleteElection(electionId) {
+  const csnap = await getDocs(collection(db, ROOT, electionId, 'classes'))
+  for (const c of csnap.docs) await deleteClass(electionId, c.id)
+  await deleteDoc(doc(db, ROOT, electionId))
+}
+
+// 관리자용 선거별 현황 요약 (반 수 / 투표인단 수 / 투표 수)
+export async function getElectionStats(electionId) {
+  const groups = await getAllBallots(electionId)
+  const classCount = groups.length
+  const voterCount = groups.reduce((s, g) => s + (g.klass.voters?.length || 0), 0)
+  const voteCount = groups.reduce((s, g) => s + g.ballots.length, 0)
+  return { classCount, voterCount, voteCount, groups }
 }
 
 // ── 결과 집계 ────────────────────────────────────────
