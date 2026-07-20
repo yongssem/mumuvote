@@ -13,6 +13,9 @@ export default function SelfVote() {
   const [voter, setVoter] = useState(null) // 선택된 본인
   const [phase, setPhase] = useState('pick') // pick | observe | vote | done
   const [detail, setDetail] = useState(null) // 후보 상세 모달
+  const [pending, setPending] = useState(null) // 학번 확인 대기 중인 후보
+  const [codeInput, setCodeInput] = useState('')
+  const [codeErr, setCodeErr] = useState('')
 
   const storeKey = `mumuvote_self_${classId}`
 
@@ -43,6 +46,29 @@ export default function SelfVote() {
   const votedCount = voters.filter((v) => votedIds.has(v.id)).length
 
   if (!election || !klass) return <Centered>불러오는 중…</Centered>
+
+  // 이름을 눌렀을 때: 학번이 있으면 본인 확인 모달, 없으면 바로 진행
+  function tapName(v) {
+    if (v.studentNo) {
+      setPending(v)
+      setCodeInput('')
+      setCodeErr('')
+    } else {
+      setVoter(v)
+      setPhase('observe')
+    }
+  }
+
+  // 학번 확인
+  function confirmCode() {
+    if (codeInput !== pending.studentNo) {
+      setCodeErr('학번이 일치하지 않습니다.')
+      return
+    }
+    setVoter(pending)
+    setPending(null)
+    setPhase('observe')
+  }
 
   // ── 완료 화면 ──
   if (phase === 'done') {
@@ -79,7 +105,8 @@ export default function SelfVote() {
         <div className="flex-1 max-w-3xl w-full mx-auto px-4 py-8">
           <h1 className="text-2xl font-black text-center">내 이름을 선택하세요</h1>
           <p className="text-slate-500 text-center mt-1 mb-6">
-            {klass.name} · 이미 투표한 이름은 선택할 수 없어요.
+            {klass.name} · 이름을 누르면 <b>학번</b>으로 본인 확인을 해요. 이미 투표한 이름은
+            선택할 수 없어요.
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {voters.map((v) => {
@@ -88,17 +115,16 @@ export default function SelfVote() {
                 <button
                   key={v.id}
                   disabled={voted}
-                  onClick={() => {
-                    setVoter(v)
-                    setPhase('observe')
-                  }}
+                  onClick={() => tapName(v)}
                   className={`card p-4 text-center font-bold transition ${
                     voted
                       ? 'opacity-40 cursor-not-allowed'
                       : 'hover:border-primary hover:ring-2 hover:ring-primary/30'
                   }`}
                 >
-                  <span className="block text-xs text-slate-400 font-normal">{v.order}번</span>
+                  <span className="block text-xs text-slate-400 font-normal">
+                    {v.studentNo ? `학번 ${v.studentNo}` : `${v.order}번`}
+                  </span>
                   <span className="text-lg">{v.name}</span>
                   {voted && <span className="block text-xs text-emerald-500 mt-1">투표함</span>}
                 </button>
@@ -106,6 +132,42 @@ export default function SelfVote() {
             })}
           </div>
         </div>
+
+        {/* 학번 본인 확인 모달 */}
+        {pending && (
+          <div
+            className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-20"
+            onClick={() => setPending(null)}
+          >
+            <div className="card p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+              <h3 className="font-black text-lg">{pending.name} 님 맞나요?</h3>
+              <p className="text-sm text-slate-500 mt-1">
+                본인 <b>학번</b>을 입력해야 투표할 수 있어요. (실수 방지)
+              </p>
+              <input
+                className="input mt-4 text-center text-2xl tracking-[0.3em] font-bold"
+                inputMode="numeric"
+                autoFocus
+                value={codeInput}
+                onChange={(e) => {
+                  setCodeErr('')
+                  setCodeInput(e.target.value.replace(/\D/g, '').slice(0, 8))
+                }}
+                onKeyDown={(e) => e.key === 'Enter' && confirmCode()}
+                placeholder="학번"
+              />
+              {codeErr && <p className="text-red-500 text-sm mt-2">{codeErr}</p>}
+              <div className="flex gap-2 mt-5">
+                <button className="btn-ghost flex-1" onClick={() => setPending(null)}>
+                  취소
+                </button>
+                <button className="btn-primary flex-1" disabled={!codeInput} onClick={confirmCode}>
+                  확인
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </Shell>
     )
   }
@@ -138,9 +200,15 @@ export default function SelfVote() {
             카드를 눌러 공약과 포스터를 확인한 뒤, 아래 버튼으로 투표를 시작하세요.
           </p>
           <CandidateGrid candidates={election.candidates} onPick={(cid) => setDetail(election.candidates.find((c) => c.id === cid))} />
-          <div className="sticky bottom-4 mt-8 flex justify-center">
+          <div className="sticky bottom-4 mt-8 flex flex-col items-center gap-2">
             <button className="btn-accent text-lg px-10 py-4 shadow-lg" onClick={() => setPhase('vote')}>
               🗳️ 투표하러 가기 →
+            </button>
+            <button
+              className="btn-ghost text-sm"
+              onClick={() => { setVoter(null); setPhase('pick') }}
+            >
+              내가 아니에요 · 이름 다시 선택
             </button>
           </div>
         </div>

@@ -28,18 +28,26 @@ export default function ClassSetup() {
     reload()
   }, [id])
 
-  const names = raw
+  // "학번 이름" 형식으로 파싱 (예: "6101 김민준"). 숫자가 없으면 이름만.
+  const parsed = raw
     .split('\n')
     .map((s) => s.trim())
     .filter(Boolean)
+    .map((line) => {
+      const m = line.match(/^(\d+)[\s.,)]+(.+)$/)
+      if (m) return { studentNo: m[1], name: m[2].trim() }
+      return { studentNo: '', name: line }
+    })
+  const noNumberCount = parsed.filter((p) => !p.studentNo).length
 
   async function save() {
-    if (!className.trim() || names.length === 0) return
+    if (!className.trim() || parsed.length === 0) return
     setSaving(true)
     try {
-      const voters = names.map((n, i) => ({
+      const voters = parsed.map((p, i) => ({
         id: uid(),
-        name: n,
+        name: p.name,
+        studentNo: p.studentNo, // 학번 (개별 투표 본인 확인용)
         order: i + 1,
         hasVoted: false,
       }))
@@ -73,18 +81,27 @@ export default function ClassSetup() {
 
           <div className="card p-5">
             <div className="flex items-center justify-between mb-1.5">
-              <label className="label mb-0">투표인단 명단</label>
-              <span className="text-sm font-semibold text-primary">{names.length}명</span>
+              <label className="label mb-0">투표인단 명단 (학번 + 이름)</label>
+              <span className="text-sm font-semibold text-primary">{parsed.length}명</span>
             </div>
             <p className="text-xs text-slate-400 mb-2">
-              한 줄에 한 명씩 이름을 입력하세요. 입력한 <b>순서대로</b> 투표를 진행해요.
+              한 줄에 한 명씩 <b>학번 이름</b> 형식으로 입력하세요. 예) <b>6101 김민준</b>
+              <br />
+              학번은 개별 투표에서 <b>본인 확인용</b>으로 쓰여요(실수 클릭 방지). 입력한{' '}
+              <b>순서대로</b> 투표합니다.
             </p>
             <textarea
               className="input min-h-[240px] font-mono text-sm"
-              placeholder={'김민준\n이서연\n박도윤\n최지우\n…'}
+              placeholder={'6101 김민준\n6102 이서연\n6103 박도윤\n6104 최지우\n…'}
               value={raw}
               onChange={(e) => setRaw(e.target.value)}
             />
+            {parsed.length > 0 && noNumberCount > 0 && (
+              <p className="text-xs text-amber-600 mt-2">
+                ⚠️ {noNumberCount}명은 학번이 없어요. 학번 없는 학생은 개별 투표에서 본인 확인
+                절차 없이 바로 투표합니다.
+              </p>
+            )}
           </div>
 
           <div className="flex gap-2">
@@ -97,7 +114,7 @@ export default function ClassSetup() {
             </button>
             <button
               className="btn-primary flex-1"
-              disabled={!className.trim() || names.length === 0 || saving}
+              disabled={!className.trim() || parsed.length === 0 || saving}
               onClick={save}
             >
               {saving ? '저장 중…' : '명단 등록하고 후보 보기 →'}
