@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import Splash from './components/Splash'
+import SoundToggle from './components/SoundToggle'
 import Landing from './pages/Landing'
 import ElectionList from './pages/ElectionList'
 import ElectionNew from './pages/ElectionNew'
@@ -16,6 +17,7 @@ export default function App() {
   return (
     <>
       <Splash />
+      <SoundToggle />
       <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/elections" element={<ElectionList />} />
