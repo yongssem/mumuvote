@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getElection, getClass, submitBallot, updateVoters } from '../lib/elections'
 import Footer from '../components/Footer'
+import { playSuccess, playComplete } from '../lib/sound'
 
 // 투표 진행 — 투표인단이 순서대로 등장해 투표
 export default function Voting() {
@@ -72,6 +73,9 @@ export default function Voting() {
       const next = voters.map((v) => (v.id === currentVoter.id ? { ...v, hasVoted: true } : v))
       await updateVoters(id, classId, next)
       setVoters(next)
+      // 마지막 투표자면 완료음, 아니면 제출 성공음
+      if (next.every((v) => v.hasVoted)) playComplete()
+      else playSuccess()
       resetPicks()
       setPhase('ready')
     } catch (e) {

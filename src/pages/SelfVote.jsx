@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { getElection, getClass, submitSelfBallot, subscribeVotedIds } from '../lib/elections'
 import Footer from '../components/Footer'
 import CandidateDetailModal from '../components/CandidateDetailModal'
+import { playComplete, playError } from '../lib/sound'
 
 // 개별 투표 — 학생이 자기 태블릿에서 비밀 링크로 접속해 각자 투표
 // 흐름: 이름 선택 → 후보 관찰 → 투표 → 완료
@@ -64,6 +65,7 @@ export default function SelfVote() {
   function confirmCode() {
     if (codeInput !== pending.studentNo) {
       setCodeErr('학번이 일치하지 않습니다.')
+      playError()
       return
     }
     setVoter(pending)
@@ -229,6 +231,7 @@ export default function SelfVote() {
           onSubmit={async (ballotData) => {
             await submitSelfBallot(id, classId, voter, ballotData)
             localStorage.setItem(storeKey, voter.id)
+            playComplete()
             setPhase('done')
           }}
         />
