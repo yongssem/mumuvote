@@ -18,7 +18,13 @@ export function compressImage(file, { maxDim = 640, maxBytes = 140 * 1024 } = {}
     }
     const url = URL.createObjectURL(file)
     const img = new Image()
+    // 디코딩이 끝나지 않는 파일(일부 HEIC 등)에서 멈추지 않도록 안전 타임아웃
+    const guard = setTimeout(() => {
+      URL.revokeObjectURL(url)
+      reject(new Error('이미지를 처리하지 못했어요. jpg/png 파일로 시도해 주세요.'))
+    }, 20000)
     img.onload = () => {
+      clearTimeout(guard)
       URL.revokeObjectURL(url)
       try {
         let { width, height } = img
@@ -48,6 +54,7 @@ export function compressImage(file, { maxDim = 640, maxBytes = 140 * 1024 } = {}
       }
     }
     img.onerror = () => {
+      clearTimeout(guard)
       URL.revokeObjectURL(url)
       reject(new Error('이미지를 읽지 못했어요. 다른 파일로 시도해 주세요.'))
     }
