@@ -158,9 +158,18 @@ export default function Candidates() {
               {detail.slogan && <p className="text-primary font-semibold mt-1">“{detail.slogan}”</p>}
               <div className="mt-4">
                 <h3 className="font-bold text-sm text-slate-500 mb-1">공약</h3>
-                <p className="whitespace-pre-wrap text-ink leading-relaxed">
-                  {detail.pledges || '등록된 공약이 없습니다.'}
-                </p>
+                {detail.pledgeImageUrl && (
+                  <img
+                    src={detail.pledgeImageUrl}
+                    alt="공약 이미지"
+                    className="w-full rounded-xl mb-3"
+                  />
+                )}
+                {detail.pledges ? (
+                  <p className="whitespace-pre-wrap text-ink leading-relaxed">{detail.pledges}</p>
+                ) : (
+                  !detail.pledgeImageUrl && <p className="text-slate-400">등록된 공약이 없습니다.</p>
+                )}
               </div>
               <button className="btn-ghost w-full mt-6" onClick={() => setDetail(null)}>
                 닫기
