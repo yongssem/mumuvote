@@ -366,7 +366,7 @@ function CandidateModal({ detail, onClose }) {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-20" onClick={onClose}>
       <div className="card w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         {detail.posterUrl && (
-          <img src={detail.posterUrl} alt={detail.name} className="w-full max-h-72 object-cover rounded-t-2xl" />
+          <img src={detail.posterUrl} alt={detail.name} className="w-full h-auto object-contain rounded-t-2xl bg-slate-50" />
         )}
         <div className="p-6">
           <span className="inline-block bg-primary text-white text-xs font-bold rounded-full px-2.5 py-1">
