@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Page from '../components/Page'
 import { createElection, randomCode, uid } from '../lib/elections'
+import { compressImage } from '../lib/image'
 
 // 새 선거 등록 — 이름, 4자리 코드, 투표 방식, 후보 목록
 export default function ElectionNew() {
@@ -26,11 +27,34 @@ export default function ElectionNew() {
     setCandidates((cs) => cs.map((c) => (c.id === id ? { ...c, [field]: value } : c)))
   }
 
+  const [uploadingId, setUploadingId] = useState(null)
+
+  // 포스터 파일 업로드 — 브라우저에서 축소·압축 후 dataURL로 저장
+  async function uploadPoster(id, file) {
+    if (!file) return
+    setUploadingId(id)
+    try {
+      const dataUrl = await compressImage(file)
+      patch(id, 'posterUrl', dataUrl)
+    } catch (e) {
+      console.error(e)
+      alert(e.message || '이미지 처리 실패')
+    } finally {
+      setUploadingId(null)
+    }
+  }
+
   const valid =
     name.trim() && code.length === 4 && candidates.every((c) => c.name.trim())
 
   async function save() {
     if (!valid) return
+    // Firestore 문서 1MB 한도 방어 — 포스터 총량이 크면 저장 전에 안내
+    const posterBytes = candidates.reduce((s, c) => s + (c.posterUrl?.length || 0), 0)
+    if (posterBytes > 950 * 1024) {
+      alert('포스터 이미지 용량이 너무 커요. 일부 포스터를 제거하거나 더 작은 사진으로 바꿔주세요.')
+      return
+    }
     setSaving(true)
     try {
       const id = await createElection({
@@ -151,12 +175,56 @@ export default function ElectionNew() {
                   value={c.pledges}
                   onChange={(e) => patch(c.id, 'pledges', e.target.value)}
                 />
-                <input
-                  className="input mt-3"
-                  placeholder="포스터 이미지 URL (선택)"
-                  value={c.posterUrl}
-                  onChange={(e) => patch(c.id, 'posterUrl', e.target.value)}
-                />
+
+                {/* 포스터 — 파일 업로드(권장) 또는 URL 직접 입력 */}
+                <div className="mt-3">
+                  <label className="label">포스터 (선택)</label>
+                  <div className="flex items-start gap-3">
+                    {/* 미리보기 */}
+                    <div className="w-20 h-20 shrink-0 rounded-xl bg-slate-100 overflow-hidden flex items-center justify-center">
+                      {c.posterUrl ? (
+                        <img src={c.posterUrl} alt="포스터 미리보기" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-slate-300 text-2xl">🖼️</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap gap-2">
+                        <label className="btn-ghost cursor-pointer">
+                          {uploadingId === c.id ? '처리 중…' : '📷 파일 선택'}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            disabled={uploadingId === c.id}
+                            onChange={(e) => {
+                              uploadPoster(c.id, e.target.files?.[0])
+                              e.target.value = '' // 같은 파일 다시 선택 가능하도록 초기화
+                            }}
+                          />
+                        </label>
+                        {c.posterUrl && (
+                          <button
+                            type="button"
+                            className="btn-ghost text-red-500"
+                            onClick={() => patch(c.id, 'posterUrl', '')}
+                          >
+                            제거
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        className="input mt-2 text-sm"
+                        placeholder="또는 이미지 URL 붙여넣기"
+                        value={c.posterUrl?.startsWith('data:') ? '' : c.posterUrl}
+                        onChange={(e) => patch(c.id, 'posterUrl', e.target.value)}
+                      />
+                      <p className="text-xs text-slate-400 mt-1">
+                        휴대폰 사진도 자동으로 작게 압축돼 저장돼요.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
