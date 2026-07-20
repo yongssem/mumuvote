@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Page from '../components/Page'
+import CandidateDetailModal from '../components/CandidateDetailModal'
 import { getElection, getClass } from '../lib/elections'
 
 // 입후보자 관찰 화면 — 카드 클릭 시 공약·포스터 상세 보기, 하단에 투표시작
@@ -134,50 +135,7 @@ export default function Candidates() {
       </div>
 
       {/* 후보 상세 모달 */}
-      {detail && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-20"
-          onClick={() => setDetail(null)}
-        >
-          <div
-            className="card w-full max-w-lg max-h-[85vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {detail.posterUrl && (
-              <img
-                src={detail.posterUrl}
-                alt={detail.name}
-                className="w-full h-auto object-contain rounded-t-2xl bg-slate-50"
-              />
-            )}
-            <div className="p-6">
-              <span className="inline-block bg-primary text-white text-xs font-bold rounded-full px-2.5 py-1">
-                기호 {detail.number}번
-              </span>
-              <h2 className="text-2xl font-black mt-2">{detail.name}</h2>
-              {detail.slogan && <p className="text-primary font-semibold mt-1">“{detail.slogan}”</p>}
-              <div className="mt-4">
-                <h3 className="font-bold text-sm text-slate-500 mb-1">공약</h3>
-                {detail.pledgeImageUrl && (
-                  <img
-                    src={detail.pledgeImageUrl}
-                    alt="공약 이미지"
-                    className="w-full rounded-xl mb-3"
-                  />
-                )}
-                {detail.pledges ? (
-                  <p className="whitespace-pre-wrap text-ink leading-relaxed">{detail.pledges}</p>
-                ) : (
-                  !detail.pledgeImageUrl && <p className="text-slate-400">등록된 공약이 없습니다.</p>
-                )}
-              </div>
-              <button className="btn-ghost w-full mt-6" onClick={() => setDetail(null)}>
-                닫기
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CandidateDetailModal candidate={detail} onClose={() => setDetail(null)} />
     </Page>
   )
 }
