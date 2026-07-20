@@ -24,4 +24,7 @@ export const db = initializeFirestore(app, {
 
 // 이미지(포스터·공약) 저장용 — Storage 사용 불가 시 앱은 dataURL 폴백으로 동작
 export const storage = getStorage(app)
+// Storage가 막혀 있을 때 기본 재시도(2분)로 UI가 멈춰 보이지 않도록 재시도 시간을 짧게
+storage.maxUploadRetryTime = 8000
+storage.maxOperationRetryTime = 8000
 
