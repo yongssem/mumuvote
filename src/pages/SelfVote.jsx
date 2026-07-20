@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { getElection, getClass, submitSelfBallot, subscribeVotedIds } from '../lib/elections'
 import Footer from '../components/Footer'
+import CandidateDetailModal from '../components/CandidateDetailModal'
 
 // 개별 투표 — 학생이 자기 태블릿에서 비밀 링크로 접속해 각자 투표
 // 흐름: 이름 선택 → 후보 관찰 → 투표 → 완료
@@ -212,7 +213,7 @@ export default function SelfVote() {
             </button>
           </div>
         </div>
-        {detail && <CandidateModal detail={detail} onClose={() => setDetail(null)} />}
+        <CandidateDetailModal candidate={detail} onClose={() => setDetail(null)} />
       </Shell>
     )
   }
@@ -356,38 +357,6 @@ function CandidateGrid({ candidates, onPick, disabled }) {
           </div>
         </button>
       ))}
-    </div>
-  )
-}
-
-// 후보 상세 모달
-function CandidateModal({ detail, onClose }) {
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-20" onClick={onClose}>
-      <div className="card w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        {detail.posterUrl && (
-          <img src={detail.posterUrl} alt={detail.name} className="w-full h-auto object-contain rounded-t-2xl bg-slate-50" />
-        )}
-        <div className="p-6">
-          <span className="inline-block bg-primary text-white text-xs font-bold rounded-full px-2.5 py-1">
-            기호 {detail.number}번
-          </span>
-          <h2 className="text-2xl font-black mt-2">{detail.name}</h2>
-          {detail.slogan && <p className="text-primary font-semibold mt-1">“{detail.slogan}”</p>}
-          <div className="mt-4">
-            <h3 className="font-bold text-sm text-slate-500 mb-1">공약</h3>
-            {detail.pledgeImageUrl && (
-              <img src={detail.pledgeImageUrl} alt="공약 이미지" className="w-full rounded-xl mb-3" />
-            )}
-            {detail.pledges ? (
-              <p className="whitespace-pre-wrap text-ink leading-relaxed">{detail.pledges}</p>
-            ) : (
-              !detail.pledgeImageUrl && <p className="text-slate-400">등록된 공약이 없습니다.</p>
-            )}
-          </div>
-          <button className="btn-ghost w-full mt-6" onClick={onClose}>닫기</button>
-        </div>
-      </div>
     </div>
   )
 }
