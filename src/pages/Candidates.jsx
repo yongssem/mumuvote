@@ -147,7 +147,7 @@ export default function Candidates() {
               <img
                 src={detail.posterUrl}
                 alt={detail.name}
-                className="w-full max-h-72 object-cover rounded-t-2xl"
+                className="w-full h-auto object-contain rounded-t-2xl bg-slate-50"
               />
             )}
             <div className="p-6">
