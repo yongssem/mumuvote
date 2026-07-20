@@ -16,27 +16,124 @@ body {
   @apply bg-slate-50 text-ink font-sans antialiased;
 }
 
-/* 공통 컴포넌트 스타일 */
+/* 공통 컴포넌트 스타일 — 네오 부르탈리즘(두꺼운 잉크 테두리 + 하드 그림자) */
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold transition active:scale-[.98] disabled:opacity-40 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-bold
+      border-2 border-ink transition-all duration-100
+      shadow-[3px_3px_0_0_#0F172A]
+      hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[5px_5px_0_0_#0F172A]
+      active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0_0_#0F172A]
+      disabled:opacity-40 disabled:pointer-events-none disabled:shadow-[3px_3px_0_0_#0F172A]
+      disabled:translate-x-0 disabled:translate-y-0;
   }
   .btn-primary {
-    @apply btn bg-primary text-white hover:bg-indigo-600 shadow-lg shadow-indigo-500/20;
+    @apply btn bg-primary text-white hover:bg-indigo-600;
   }
   .btn-accent {
-    @apply btn bg-accent text-white hover:bg-amber-500 shadow-lg shadow-amber-500/20;
+    @apply btn bg-accent text-white hover:bg-amber-500;
   }
   .btn-ghost {
-    @apply btn bg-white text-ink border border-slate-200 hover:bg-slate-50;
+    @apply btn bg-white text-ink hover:bg-slate-50;
   }
   .card {
-    @apply bg-white rounded-2xl border border-slate-200 shadow-sm;
+    @apply bg-white rounded-2xl border-2 border-ink shadow-[4px_4px_0_0_#0F172A];
   }
   .input {
-    @apply w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20;
+    @apply w-full rounded-xl border-2 border-ink px-4 py-3 outline-none transition
+      focus:shadow-[3px_3px_0_0_#0F172A];
   }
   .label {
-    @apply block text-sm font-semibold text-slate-700 mb-1.5;
+    @apply block text-sm font-bold text-slate-700 mb-1.5;
   }
+}
+
+/* 클릭 가능한 카드(버튼/링크/라벨로 감싼 카드)는 호버 시 떠오르고 클릭 시 눌린다 */
+button.card,
+a.card,
+label.card {
+  @apply cursor-pointer transition-all duration-100;
+}
+button.card:hover,
+a.card:hover,
+label.card:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 8px 8px 0 0 #0f172a !important;
+}
+button.card:active,
+a.card:active,
+label.card:active {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 0 #0f172a !important;
+}
+
+/* ── 스플래시 인트로 ───────────────────────────────── */
+.splash {
+  @apply fixed inset-0 z-50 flex items-center justify-center overflow-hidden;
+  background:
+    radial-gradient(1200px 500px at 50% -10%, rgba(255, 255, 255, 0.18), transparent 60%),
+    linear-gradient(135deg, #4f46e5 0%, #312e81 55%, #1e1b4b 100%);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.splash-out {
+  opacity: 0;
+  transform: scale(1.06);
+  pointer-events: none;
+}
+
+@keyframes pop-in {
+  0% {
+    transform: translateY(24px) scale(0.9);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(-6px) scale(1.02);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+@keyframes stamp {
+  0% {
+    transform: rotate(-14deg) scale(2.2);
+    opacity: 0;
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(-6deg) scale(1);
+    opacity: 1;
+  }
+}
+@keyframes load-bar {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+@keyframes float-blob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-6deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(-2deg);
+  }
+}
+.animate-pop {
+  animation: pop-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.animate-stamp {
+  animation: stamp 0.55s 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.animate-load {
+  animation: load-bar 1.5s linear both;
+}
+.animate-blob {
+  animation: float-blob 4s ease-in-out infinite;
 }

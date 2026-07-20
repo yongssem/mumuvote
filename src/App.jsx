@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom'
+import Splash from './components/Splash'
 import Landing from './pages/Landing'
 import ElectionList from './pages/ElectionList'
 import ElectionNew from './pages/ElectionNew'
@@ -13,7 +14,9 @@ import SuperAdmin from './pages/SuperAdmin'
 // 무무보트 라우팅
 export default function App() {
   return (
-    <Routes>
+    <>
+      <Splash />
+      <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/elections" element={<ElectionList />} />
       <Route path="/elections/new" element={<ElectionNew />} />
@@ -28,6 +31,7 @@ export default function App() {
       {/* 슈퍼 관리자 */}
       <Route path="/admin" element={<SuperAdmin />} />
       <Route path="*" element={<Landing />} />
-    </Routes>
+      </Routes>
+    </>
   )
 }
