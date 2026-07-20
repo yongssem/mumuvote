@@ -7,8 +7,8 @@ import { ref, uploadString, getDownloadURL } from 'firebase/storage'
 import { compressImage } from './image'
 import { uid } from './elections'
 
-// Storage 사용 여부 — 무료 요금제에서는 false (문서에 압축 저장)
-const USE_STORAGE = false
+// Storage 사용 여부 — Blaze 요금제 + Storage 규칙 설정 시 true (선명·용량 무제한)
+const USE_STORAGE = true
 
 // 지정 시간 안에 끝나지 않으면 거부 (Storage가 응답 없이 매달리는 상황 방지)
 function withTimeout(promise, ms) {
@@ -25,8 +25,8 @@ export async function uploadCandidateImage(file) {
     return await compressImage(file, { maxDim: 900, maxBytes: 160 * 1024 })
   }
 
-  // (Storage 사용 시) 선명하게 압축 후 업로드, 10초 초과하면 압축 dataURL로 폴백
-  const bigDataUrl = await compressImage(file, { maxDim: 1280, maxBytes: 500 * 1024 })
+  // (Storage 사용 시) 선명하게 압축 후 업로드, 15초 초과하면 압축 dataURL로 폴백
+  const bigDataUrl = await compressImage(file, { maxDim: 1600, maxBytes: 1200 * 1024 })
   try {
     const url = await withTimeout(
       (async () => {
@@ -34,7 +34,7 @@ export async function uploadCandidateImage(file) {
         await uploadString(r, bigDataUrl, 'data_url')
         return await getDownloadURL(r)
       })(),
-      10000
+      15000
     )
     return url
   } catch (e) {
