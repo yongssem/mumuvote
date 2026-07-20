@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Page from '../components/Page'
 import { createElection, randomCode, uid } from '../lib/elections'
-import { compressImage } from '../lib/image'
+import { uploadCandidateImage } from '../lib/storage'
 
 // 새 선거 등록 — 이름, 4자리 코드, 투표 방식, 후보 목록
 export default function ElectionNew() {
@@ -14,7 +14,7 @@ export default function ElectionNew() {
   const [saving, setSaving] = useState(false)
 
   function blankCandidate(number) {
-    return { id: uid(), number, name: '', slogan: '', pledges: '', posterUrl: '' }
+    return { id: uid(), number, name: '', slogan: '', pledges: '', posterUrl: '', pledgeImageUrl: '' }
   }
 
   function addCandidate() {
@@ -27,20 +27,20 @@ export default function ElectionNew() {
     setCandidates((cs) => cs.map((c) => (c.id === id ? { ...c, [field]: value } : c)))
   }
 
-  const [uploadingId, setUploadingId] = useState(null)
+  const [uploadingKey, setUploadingKey] = useState(null) // `${id}:${field}` 업로드 중 표시
 
-  // 포스터 파일 업로드 — 브라우저에서 축소·압축 후 dataURL로 저장
-  async function uploadPoster(id, file) {
+  // 이미지 파일 업로드 (포스터/공약 공용) — Storage 우선, 실패 시 압축 dataURL 폴백
+  async function uploadImage(id, field, file) {
     if (!file) return
-    setUploadingId(id)
+    setUploadingKey(`${id}:${field}`)
     try {
-      const dataUrl = await compressImage(file)
-      patch(id, 'posterUrl', dataUrl)
+      const value = await uploadCandidateImage(file)
+      patch(id, field, value)
     } catch (e) {
       console.error(e)
       alert(e.message || '이미지 처리 실패')
     } finally {
-      setUploadingId(null)
+      setUploadingKey(null)
     }
   }
 
@@ -49,10 +49,14 @@ export default function ElectionNew() {
 
   async function save() {
     if (!valid) return
-    // Firestore 문서 1MB 한도 방어 — 포스터 총량이 크면 저장 전에 안내
-    const posterBytes = candidates.reduce((s, c) => s + (c.posterUrl?.length || 0), 0)
-    if (posterBytes > 950 * 1024) {
-      alert('포스터 이미지 용량이 너무 커요. 일부 포스터를 제거하거나 더 작은 사진으로 바꿔주세요.')
+    // Firestore 문서 1MB 한도 방어 — 문서에 직접 담기는 이미지(dataURL 폴백) 총량이 크면 안내
+    // (Storage에 올라간 경우는 짧은 URL이라 용량 부담이 없다.)
+    const imgBytes = candidates.reduce(
+      (s, c) => s + (c.posterUrl?.length || 0) + (c.pledgeImageUrl?.length || 0),
+      0
+    )
+    if (imgBytes > 950 * 1024) {
+      alert('이미지 용량이 너무 커요. 일부 이미지를 제거하거나 더 작은 사진으로 바꿔주세요.')
       return
     }
     setSaving(true)
@@ -171,59 +175,28 @@ export default function ElectionNew() {
                 </div>
                 <textarea
                   className="input mt-3 min-h-[80px]"
-                  placeholder="공약 (여러 줄 입력 가능)"
+                  placeholder="공약 (여러 줄 입력 가능 · 아래에 이미지로도 올릴 수 있어요)"
                   value={c.pledges}
                   onChange={(e) => patch(c.id, 'pledges', e.target.value)}
                 />
 
-                {/* 포스터 — 파일 업로드(권장) 또는 URL 직접 입력 */}
-                <div className="mt-3">
-                  <label className="label">포스터 (선택)</label>
-                  <div className="flex items-start gap-3">
-                    {/* 미리보기 */}
-                    <div className="w-20 h-20 shrink-0 rounded-xl bg-slate-100 overflow-hidden flex items-center justify-center">
-                      {c.posterUrl ? (
-                        <img src={c.posterUrl} alt="포스터 미리보기" className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-slate-300 text-2xl">🖼️</span>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap gap-2">
-                        <label className="btn-ghost cursor-pointer">
-                          {uploadingId === c.id ? '처리 중…' : '📷 파일 선택'}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            disabled={uploadingId === c.id}
-                            onChange={(e) => {
-                              uploadPoster(c.id, e.target.files?.[0])
-                              e.target.value = '' // 같은 파일 다시 선택 가능하도록 초기화
-                            }}
-                          />
-                        </label>
-                        {c.posterUrl && (
-                          <button
-                            type="button"
-                            className="btn-ghost text-red-500"
-                            onClick={() => patch(c.id, 'posterUrl', '')}
-                          >
-                            제거
-                          </button>
-                        )}
-                      </div>
-                      <input
-                        className="input mt-2 text-sm"
-                        placeholder="또는 이미지 URL 붙여넣기"
-                        value={c.posterUrl?.startsWith('data:') ? '' : c.posterUrl}
-                        onChange={(e) => patch(c.id, 'posterUrl', e.target.value)}
-                      />
-                      <p className="text-xs text-slate-400 mt-1">
-                        휴대폰 사진도 자동으로 작게 압축돼 저장돼요.
-                      </p>
-                    </div>
-                  </div>
+                <div className="grid sm:grid-cols-2 gap-3 mt-3">
+                  <ImageField
+                    label="포스터 (선택)"
+                    value={c.posterUrl}
+                    uploading={uploadingKey === `${c.id}:posterUrl`}
+                    onPick={(file) => uploadImage(c.id, 'posterUrl', file)}
+                    onClear={() => patch(c.id, 'posterUrl', '')}
+                    onUrl={(v) => patch(c.id, 'posterUrl', v)}
+                  />
+                  <ImageField
+                    label="공약 이미지 (선택)"
+                    value={c.pledgeImageUrl}
+                    uploading={uploadingKey === `${c.id}:pledgeImageUrl`}
+                    onPick={(file) => uploadImage(c.id, 'pledgeImageUrl', file)}
+                    onClear={() => patch(c.id, 'pledgeImageUrl', '')}
+                    onUrl={(v) => patch(c.id, 'pledgeImageUrl', v)}
+                  />
                 </div>
               </div>
             ))}
@@ -240,6 +213,52 @@ export default function ElectionNew() {
         </div>
       </div>
     </Page>
+  )
+}
+
+// 이미지 입력 (파일 업로드 + 미리보기 + URL 직접 입력) — 포스터/공약 공용
+function ImageField({ label, value, uploading, onPick, onClear, onUrl }) {
+  return (
+    <div>
+      <label className="label">{label}</label>
+      <div className="flex items-start gap-3">
+        <div className="w-20 h-20 shrink-0 rounded-xl bg-slate-100 overflow-hidden flex items-center justify-center">
+          {value ? (
+            <img src={value} alt="미리보기" className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-slate-300 text-2xl">🖼️</span>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap gap-2">
+            <label className="btn-ghost cursor-pointer">
+              {uploading ? '처리 중…' : '📷 파일 선택'}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={uploading}
+                onChange={(e) => {
+                  onPick(e.target.files?.[0])
+                  e.target.value = '' // 같은 파일 다시 선택 가능하도록 초기화
+                }}
+              />
+            </label>
+            {value && (
+              <button type="button" className="btn-ghost text-red-500" onClick={onClear}>
+                제거
+              </button>
+            )}
+          </div>
+          <input
+            className="input mt-2 text-sm"
+            placeholder="또는 이미지 URL"
+            value={value?.startsWith('data:') ? '' : value || ''}
+            onChange={(e) => onUrl(e.target.value)}
+          />
+        </div>
+      </div>
+    </div>
   )
 }
 

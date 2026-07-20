@@ -3,6 +3,7 @@
 // 참고: 웹 config의 apiKey는 비밀키가 아니라 공개용 식별자다.
 import { initializeApp } from 'firebase/app'
 import { initializeFirestore } from 'firebase/firestore'
+import { getStorage } from 'firebase/storage'
 
 const firebaseConfig = {
   apiKey: 'AIzaSyCL2d94hAMMaT-4YvlfxP4XGdgVWz0aXxU',
@@ -20,4 +21,7 @@ const app = initializeApp(firebaseConfig)
 export const db = initializeFirestore(app, {
   experimentalForceLongPolling: true,
 })
+
+// 이미지(포스터·공약) 저장용 — Storage 사용 불가 시 앱은 dataURL 폴백으로 동작
+export const storage = getStorage(app)
 
