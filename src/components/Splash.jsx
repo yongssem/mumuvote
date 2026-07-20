@@ -34,7 +34,7 @@ export default function Splash() {
         <div className="animate-stamp inline-flex w-20 h-20 rounded-2xl bg-accent border-[3px] border-ink items-center justify-center text-4xl shadow-[4px_4px_0_0_#0F172A]">
           🗳️
         </div>
-        <h1 className="text-5xl font-black mt-6 tracking-tight text-ink">무무보트</h1>
+        <h1 className="text-4xl sm:text-5xl font-black mt-6 tracking-tight text-ink">딥리딩 투표소</h1>
         <p className="text-slate-500 font-bold mt-2">학교 선거, 링크 하나로</p>
 
         {/* 로딩 바 */}

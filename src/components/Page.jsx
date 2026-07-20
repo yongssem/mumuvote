@@ -11,9 +11,9 @@ export default function Page({ title, subtitle, children, maxWidth = 'max-w-3xl'
             <span className="inline-flex w-7 h-7 rounded-lg bg-primary text-white items-center justify-center text-sm">
               ✓
             </span>
-            무무보트
+            딥리딩 투표소
           </Link>
-          <span className="text-xs text-slate-400">학교 선거 · MUMUVOTE</span>
+          <span className="text-xs text-slate-400">딥리딩 교실 · 학교 선거</span>
         </div>
       </header>
 
