@@ -8,6 +8,7 @@ import Voting from './pages/Voting'
 import SelfVote from './pages/SelfVote'
 import Results from './pages/Results'
 import ResultsAll from './pages/ResultsAll'
+import SuperAdmin from './pages/SuperAdmin'
 
 // 무무보트 라우팅
 export default function App() {
@@ -24,6 +25,8 @@ export default function App() {
       <Route path="/elections/:id/results" element={<ResultsAll />} />
       {/* 개별 투표(자기 기기·비밀 링크) */}
       <Route path="/self/:id/:classId" element={<SelfVote />} />
+      {/* 슈퍼 관리자 */}
+      <Route path="/admin" element={<SuperAdmin />} />
       <Route path="*" element={<Landing />} />
     </Routes>
   )
