@@ -1,10 +1,14 @@
 // 이미지 업로드 헬퍼
-// 1순위: Firebase Storage에 올리고 다운로드 URL(짧은 링크) 반환 → 선명하고 문서 용량 부담 없음
-// 폴백: Storage를 못 쓰면(규칙 차단 등) 작게 압축한 dataURL을 그대로 반환 → 문서에 직접 저장
+// 기본값(무료 요금제): 이미지를 브라우저에서 압축해 dataURL로 문서에 바로 저장 → 즉시 완료.
+// Firebase Storage는 요금제(Blaze) 업그레이드가 필요해 기본 미사용.
+//   나중에 Blaze로 올려 Storage를 쓰려면 USE_STORAGE를 true로 바꾸면 됨(선명·용량 무제한).
 import { storage } from '../firebase'
 import { ref, uploadString, getDownloadURL } from 'firebase/storage'
 import { compressImage } from './image'
 import { uid } from './elections'
+
+// Storage 사용 여부 — 무료 요금제에서는 false (문서에 압축 저장)
+const USE_STORAGE = false
 
 // 지정 시간 안에 끝나지 않으면 거부 (Storage가 응답 없이 매달리는 상황 방지)
 function withTimeout(promise, ms) {
@@ -14,12 +18,16 @@ function withTimeout(promise, ms) {
   ])
 }
 
-// 이미지 파일 → 표시용 문자열(Storage URL 또는 dataURL) 반환
+// 이미지 파일 → 표시용 문자열(Storage URL 또는 압축 dataURL) 반환
 export async function uploadCandidateImage(file) {
-  // Storage용: 선명하게(글씨 있는 공약도 읽히도록) 적당히 큰 크기로 압축
+  // 무료 요금제: Storage 시도 없이 곧바로 압축 dataURL 반환 (즉시 완료, 멈춤 없음)
+  if (!USE_STORAGE) {
+    return await compressImage(file, { maxDim: 900, maxBytes: 160 * 1024 })
+  }
+
+  // (Storage 사용 시) 선명하게 압축 후 업로드, 10초 초과하면 압축 dataURL로 폴백
   const bigDataUrl = await compressImage(file, { maxDim: 1280, maxBytes: 500 * 1024 })
   try {
-    // 10초 안에 업로드+URL 획득이 안 되면 폴백으로 넘어간다 (UI 멈춤 방지)
     const url = await withTimeout(
       (async () => {
         const r = ref(storage, `mumuvote_images/${uid()}.jpg`)
@@ -30,7 +38,6 @@ export async function uploadCandidateImage(file) {
     )
     return url
   } catch (e) {
-    // Storage 불가/지연 → 문서에 담을 수 있게 더 작게 압축한 dataURL로 폴백
     console.warn('Storage 업로드 실패·지연, dataURL로 폴백합니다:', e?.message)
     return await compressImage(file, { maxDim: 720, maxBytes: 150 * 1024 })
   }
