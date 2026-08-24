@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getElection, getClass, submitBallot, updateVoters } from '../lib/elections'
 import Footer from '../components/Footer'
+import VoteModeGuide from '../components/VoteModeGuide'
 import { playSuccess, playComplete } from '../lib/sound'
 
 // 투표 진행 — 투표인단이 순서대로 등장해 투표
@@ -138,9 +139,12 @@ export default function Voting() {
               <h1 className="text-2xl font-black mb-1">
                 <span className="text-primary">{rankLabel[currentRank]}</span> 후보를 선택하세요
               </h1>
-              <p className="text-slate-500 mb-5">
+              <p className="text-slate-500 mb-3">
                 이미 고른 후보는 제외됩니다. {chosenIds.length > 0 && `(${chosenIds.length}/3 선택)`}
               </p>
+              <div className="mb-5">
+                <VoteModeGuide voteMode="ranked" variant="compact" />
+              </div>
               <CandidateGrid
                 candidates={election.candidates.filter((c) => !chosenIds.includes(c.id))}
                 onPick={pickRanked}
