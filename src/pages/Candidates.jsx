@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Page from '../components/Page'
 import CandidateDetailModal from '../components/CandidateDetailModal'
+import VoteModeGuide from '../components/VoteModeGuide'
 import { getElection, getClass } from '../lib/elections'
 
 // 입후보자 관찰 화면 — 카드 클릭 시 공약·포스터 상세 보기, 하단에 투표시작
@@ -49,6 +50,11 @@ export default function Candidates() {
       <p className="text-slate-500 mb-4">
         후보 카드를 눌러 <b>공약과 포스터</b>를 확인하세요.
       </p>
+
+      {/* 투표 방식 설명 — 투표 전에 방식을 이해하도록 */}
+      <div className="mb-5">
+        <VoteModeGuide voteMode={election.voteMode} />
+      </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {election.candidates.map((c) => (

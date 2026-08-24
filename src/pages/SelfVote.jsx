@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { getElection, getClass, submitSelfBallot, subscribeVotedIds } from '../lib/elections'
 import Footer from '../components/Footer'
 import CandidateDetailModal from '../components/CandidateDetailModal'
+import VoteModeGuide from '../components/VoteModeGuide'
 import { playComplete, playError } from '../lib/sound'
 
 // 개별 투표 — 학생이 자기 태블릿에서 비밀 링크로 접속해 각자 투표
@@ -199,9 +200,13 @@ export default function SelfVote() {
         <div className="flex-1 max-w-4xl w-full mx-auto px-4 py-6">
           <p className="text-slate-400 font-semibold text-center">{voter.name}님</p>
           <h1 className="text-2xl font-black text-center mt-1">후보를 살펴보세요</h1>
-          <p className="text-slate-500 text-center mt-1 mb-5">
+          <p className="text-slate-500 text-center mt-1 mb-4">
             카드를 눌러 공약과 포스터를 확인한 뒤, 아래 버튼으로 투표를 시작하세요.
           </p>
+          {/* 투표 방식 설명 */}
+          <div className="mb-5">
+            <VoteModeGuide voteMode={election.voteMode} />
+          </div>
           <CandidateGrid candidates={election.candidates} onPick={(cid) => setDetail(election.candidates.find((c) => c.id === cid))} />
           <div className="sticky bottom-4 mt-8 flex flex-col items-center gap-2">
             <button className="btn-accent text-lg px-10 py-4 shadow-lg" onClick={() => setPhase('vote')}>
@@ -305,9 +310,12 @@ function VoteBox({ election, onSubmit, onCancel }) {
           <h1 className="text-2xl font-black mb-1 text-center">
             <span className="text-primary">{rankLabel[currentRank]}</span> 후보를 선택하세요
           </h1>
-          <p className="text-slate-500 mb-5 text-center">
+          <p className="text-slate-500 mb-3 text-center">
             이미 고른 후보는 제외됩니다. {chosenIds.length > 0 && `(${chosenIds.length}/3 선택)`}
           </p>
+          <div className="mb-5">
+            <VoteModeGuide voteMode="ranked" variant="compact" />
+          </div>
           <CandidateGrid
             candidates={election.candidates.filter((c) => !chosenIds.includes(c.id))}
             onPick={(cid) => setPicks((p) => ({ ...p, [currentRank]: cid }))}

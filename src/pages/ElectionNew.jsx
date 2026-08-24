@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Page from '../components/Page'
 import { createElection, randomCode, uid } from '../lib/elections'
 import { uploadCandidateImage } from '../lib/storage'
+import VoteModeGuide from '../components/VoteModeGuide'
 
 // 새 선거 등록 — 이름, 4자리 코드, 투표 방식, 후보 목록
 export default function ElectionNew() {
@@ -137,6 +138,9 @@ export default function ElectionNew() {
                   단순 선택
                   <span className="block text-xs font-normal opacity-70">한 명만 선택</span>
                 </ModeBtn>
+              </div>
+              <div className="mt-2">
+                <VoteModeGuide voteMode={voteMode} variant="compact" />
               </div>
             </div>
           </div>
