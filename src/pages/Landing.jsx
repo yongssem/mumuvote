@@ -33,7 +33,7 @@ export default function Landing() {
             🗳️ 학교 선거를 링크 하나로
           </div>
           <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tight leading-tight">
-            딥리딩 투표소
+            무무투표
           </h1>
           <p className="mt-5 text-lg sm:text-xl text-white/85 leading-relaxed">
             학급·전교학생회 선거를 만들고, 후보 공약을 살펴보고,
