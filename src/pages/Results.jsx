@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Page from '../components/Page'
+import RevealCountdown, { Confetti } from '../components/RevealCountdown'
 import { getElection, getClass, getBallots, tally } from '../lib/elections'
 
 // 결과 집계 화면
@@ -10,6 +11,8 @@ export default function Results() {
   const [election, setElection] = useState(null)
   const [klass, setKlass] = useState(null)
   const [rows, setRows] = useState(null)
+  const [phase, setPhase] = useState('gate') // gate(발표 전) | counting | shown
+  const [confetti, setConfetti] = useState(false)
 
   async function load() {
     const [e, k, b] = await Promise.all([
@@ -33,11 +36,56 @@ export default function Results() {
   const voted = klass?.voters?.filter((v) => v.hasVoted).length || 0
   const total = klass?.voters?.length || 0
 
+  // ── 발표 전 대기 화면 ──
+  if (phase === 'gate') {
+    return (
+      <Page
+        title="투표 결과"
+        subtitle={`${election.name}${klass ? ' · ' + klass.name : ''} · ${voted}/${total} 투표`}
+      >
+        <div className="card p-10 text-center">
+          <div className="text-6xl mb-4">🗳️</div>
+          <h2 className="text-2xl font-black">개표가 끝났습니다</h2>
+          <p className="text-slate-500 mt-2">
+            준비되면 아래 버튼을 눌러 결과를 발표하세요.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2 justify-center mt-8">
+            <button
+              className="btn-accent text-lg px-8 py-4"
+              onClick={() => setPhase('counting')}
+            >
+              🥁 결과 발표하기
+            </button>
+            <button className="btn-ghost" onClick={() => setPhase('shown')}>
+              바로 보기
+            </button>
+          </div>
+        </div>
+      </Page>
+    )
+  }
+
+  // ── 3·2·1 카운트다운 ──
+  if (phase === 'counting') {
+    return (
+      <RevealCountdown
+        title={`${election.name}${klass ? ' · ' + klass.name : ''}`}
+        onDone={() => {
+          setPhase('shown')
+          setConfetti(true)
+          setTimeout(() => setConfetti(false), 6000)
+        }}
+      />
+    )
+  }
+
   return (
     <Page
       title="투표 결과"
       subtitle={`${election.name}${klass ? ' · ' + klass.name : ''} · ${voted}/${total} 투표`}
     >
+      {confetti && <Confetti />}
+
       <div className="mb-4 flex justify-between items-center">
         <p className="text-sm text-slate-500">
           {ranked ? '순위투표 (1등 3점·2등 2점·3등 1점 합산)' : '단순 선택 (득표수)'}
@@ -49,7 +97,10 @@ export default function Results() {
 
       <div className="space-y-3">
         {rows.map((r, i) => (
-          <div key={r.candidate.id} className={`card p-5 ${i === 0 ? 'ring-2 ring-accent' : ''}`}>
+          <div
+            key={r.candidate.id}
+            className={`card p-5 ${i === 0 ? 'ring-2 ring-accent animate-winner' : ''}`}
+          >
             <div className="flex items-center gap-4">
               <span
                 className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center font-black text-lg ${

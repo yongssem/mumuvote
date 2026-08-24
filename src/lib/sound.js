@@ -68,6 +68,37 @@ export function playComplete() {
   ;[523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.1, 0.28, 'triangle', 0.11))
   tone(1568, 0.5, 0.4, 'sine', 0.06)
 }
+// 카운트다운 틱 (3·2·1) — 낮고 묵직하게
+export function playTick(n) {
+  if (muted) return
+  // 숫자가 줄수록 음이 높아져 긴장감 상승
+  const f = n === 3 ? 392 : n === 2 ? 494 : 587
+  tone(f, 0, 0.18, 'square', 0.07)
+  tone(f / 2, 0, 0.22, 'sine', 0.05)
+}
+
+// 두구두구 — 낮은 노이즈성 진동으로 드럼롤 느낌
+export function playDrumroll(seconds = 1.2) {
+  if (muted) return
+  const c = ac()
+  if (!c) return
+  const steps = Math.floor(seconds / 0.055)
+  for (let i = 0; i < steps; i++) {
+    const t = i * 0.055
+    const f = 90 + Math.sin(i * 0.7) * 25
+    tone(f, t, 0.05, 'triangle', 0.045)
+  }
+}
+
+// 결과 공개 팡파레
+export function playFanfare() {
+  if (muted) return
+  const notes = [523, 659, 784, 1047, 1319]
+  notes.forEach((f, i) => tone(f, i * 0.11, 0.45, 'triangle', 0.11))
+  tone(1568, 0.62, 0.7, 'sine', 0.07)
+  tone(2093, 0.72, 0.6, 'sine', 0.05)
+}
+
 // 오류/불일치
 export function playError() {
   if (muted) return

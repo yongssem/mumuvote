@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Page from '../components/Page'
+import RevealCountdown, { Confetti } from '../components/RevealCountdown'
 import { getElection, getAllBallots, tally } from '../lib/elections'
 
 // 전체 결과 — 반별 집계 + 원하는 반만 골라 합산
@@ -10,6 +11,8 @@ export default function ResultsAll() {
   const [election, setElection] = useState(null)
   const [groups, setGroups] = useState(null) // [{ klass, ballots }]
   const [included, setIncluded] = useState({}) // classId -> bool (합산 포함 여부)
+  const [phase, setPhase] = useState('gate') // gate(발표 전) | counting | shown
+  const [confetti, setConfetti] = useState(false)
 
   async function load() {
     const [e, g] = await Promise.all([getElection(id), getAllBallots(id)])
@@ -41,9 +44,49 @@ export default function ResultsAll() {
 
   const includedCount = groups.filter((g) => included[g.klass.id]).length
   const combinedBallots = groups.filter((g) => included[g.klass.id]).reduce((s, g) => s + g.ballots.length, 0)
+  const totalBallots = groups.reduce((s, g) => s + g.ballots.length, 0)
+
+  // ── 발표 전 대기 화면 ──
+  if (phase === 'gate' && groups.length > 0) {
+    return (
+      <Page title="전체 결과 · 반별 집계" subtitle={election.name}>
+        <div className="card p-10 text-center">
+          <div className="text-6xl mb-4">🏆</div>
+          <h2 className="text-2xl font-black">전체 개표가 끝났습니다</h2>
+          <p className="text-slate-500 mt-2">
+            {groups.length}개 반 · 총 {totalBallots}표 · 준비되면 결과를 발표하세요.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2 justify-center mt-8">
+            <button className="btn-accent text-lg px-8 py-4" onClick={() => setPhase('counting')}>
+              🥁 결과 발표하기
+            </button>
+            <button className="btn-ghost" onClick={() => setPhase('shown')}>
+              바로 보기
+            </button>
+          </div>
+        </div>
+      </Page>
+    )
+  }
+
+  // ── 3·2·1 카운트다운 ──
+  if (phase === 'counting') {
+    return (
+      <RevealCountdown
+        title={election.name}
+        onDone={() => {
+          setPhase('shown')
+          setConfetti(true)
+          setTimeout(() => setConfetti(false), 6000)
+        }}
+      />
+    )
+  }
 
   return (
     <Page title="전체 결과 · 반별 집계" subtitle={election.name}>
+      {confetti && <Confetti />}
+
       <div className="mb-4 flex justify-between items-center">
         <p className="text-sm text-slate-500">
           {ranked ? '순위투표 (1등 3점·2등 2점·3등 1점 합산)' : '단순 선택 (득표수)'}
