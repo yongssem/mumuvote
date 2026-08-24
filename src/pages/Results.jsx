@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Page from '../components/Page'
 import RevealCountdown, { Confetti } from '../components/RevealCountdown'
+import BallotBox from '../components/BallotBox'
 import { getElection, getClass, getBallots, tally } from '../lib/elections'
 
 // 결과 집계 화면
@@ -13,6 +14,8 @@ export default function Results() {
   const [rows, setRows] = useState(null)
   const [phase, setPhase] = useState('gate') // gate(발표 전) | counting | shown
   const [confetti, setConfetti] = useState(false)
+  const [ballots, setBallots] = useState([]) // 투표함·수개표용 원본 투표지
+  const [showBox, setShowBox] = useState(false)
 
   async function load() {
     const [e, k, b] = await Promise.all([
@@ -22,6 +25,7 @@ export default function Results() {
     ])
     setElection(e)
     setKlass(k)
+    setBallots(b)
     setRows(tally(e, b))
   }
 
@@ -139,6 +143,27 @@ export default function Results() {
           </div>
         ))}
       </div>
+
+      {/* 투표함 열어보기 — 부정선거가 아님을 눈으로 확인 */}
+      <div className="card p-5 mt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div>
+          <p className="font-bold text-lg">🗳️ 투표함 열어보기 · 수개표</p>
+          <p className="text-slate-500 text-sm mt-0.5">
+            투표용지 {ballots.length}장을 한 장씩 꺼내 세어 봅니다. 이름은 적혀 있지 않아요.
+          </p>
+        </div>
+        <button
+          className="btn-accent w-full sm:w-auto px-6 py-3"
+          disabled={ballots.length === 0}
+          onClick={() => setShowBox(true)}
+        >
+          투표함 열기
+        </button>
+      </div>
+
+      {showBox && (
+        <BallotBox election={election} ballots={ballots} onClose={() => setShowBox(false)} />
+      )}
 
       <div className="flex gap-2 mt-8">
         <button className="btn-ghost flex-1" onClick={() => nav('/elections')}>
