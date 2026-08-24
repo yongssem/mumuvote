@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Page from '../components/Page'
-import { createElection, randomCode, uid } from '../lib/elections'
+import { createElection, randomCode, randomUnusedCode, isCodeTaken, uid } from '../lib/elections'
 import { uploadCandidateImage } from '../lib/storage'
 import VoteModeGuide from '../components/VoteModeGuide'
 
@@ -13,6 +13,21 @@ export default function ElectionNew() {
   const [voteMode, setVoteMode] = useState('ranked')
   const [candidates, setCandidates] = useState([blankCandidate(1), blankCandidate(2)])
   const [saving, setSaving] = useState(false)
+  const [codeErr, setCodeErr] = useState('')
+  const [rolling, setRolling] = useState(false)
+
+  // 아직 안 쓰인 코드로 새로 뽑기
+  async function rollCode() {
+    setRolling(true)
+    setCodeErr('')
+    try {
+      setCode(await randomUnusedCode())
+    } catch {
+      setCode(randomCode())
+    } finally {
+      setRolling(false)
+    }
+  }
 
   function blankCandidate(number) {
     return { id: uid(), number, name: '', slogan: '', pledges: '', posterUrl: '', pledgeImageUrl: '' }
@@ -74,6 +89,12 @@ export default function ElectionNew() {
     }
     setSaving(true)
     try {
+      // 코드 중복 방지 — 같은 코드가 있으면 코드로 찾을 때 헷갈린다
+      if (await isCodeTaken(code)) {
+        setCodeErr('이미 사용 중인 코드예요. 🎲 를 눌러 다른 코드를 받아주세요.')
+        setSaving(false)
+        return
+      }
       const id = await createElection({
         name: name.trim(),
         code,
@@ -118,13 +139,22 @@ export default function ElectionNew() {
                   inputMode="numeric"
                   maxLength={4}
                   value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  onChange={(e) => {
+                    setCodeErr('')
+                    setCode(e.target.value.replace(/\D/g, '').slice(0, 4))
+                  }}
                 />
-                <button className="btn-ghost" onClick={() => setCode(randomCode())} type="button">
-                  🎲
+                <button className="btn-ghost" onClick={rollCode} type="button" disabled={rolling}>
+                  {rolling ? '…' : '🎲'}
                 </button>
               </div>
-              <p className="text-xs text-slate-400 mt-1">이 코드를 아는 사람만 선거에 입장할 수 있어요.</p>
+              {codeErr ? (
+                <p className="text-xs text-red-500 mt-1">{codeErr}</p>
+              ) : (
+                <p className="text-xs text-slate-400 mt-1">
+                  이 코드로 다른 기기에서 선거를 찾아 들어와요. 학생·동료 선생님께 알려주세요.
+                </p>
+              )}
             </div>
 
             <div>

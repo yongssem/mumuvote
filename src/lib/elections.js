@@ -17,14 +17,76 @@ import {
   updateDoc,
   deleteDoc,
   onSnapshot,
+  query,
+  where,
   serverTimestamp,
 } from 'firebase/firestore'
 
 const ROOT = 'mumuvote_elections'
+const MINE_KEY = 'mumuvote_my_elections' // 이 기기에서 만든 선거 id 목록
 
 // 4자리 코드 무작위 생성 (앞자리 0 유지)
 export function randomCode() {
   return String(Math.floor(1000 + Math.random() * 9000))
+}
+
+// 아직 쓰이지 않은 4자리 코드 생성 (중복 방지)
+// 4자리는 경우의 수가 9000뿐이라, 선거가 100개만 넘어도 우연히 겹칠 확률이 꽤 높다.
+export async function randomUnusedCode(tries = 12) {
+  for (let i = 0; i < tries; i++) {
+    const c = randomCode()
+    if (!(await isCodeTaken(c))) return c
+  }
+  return randomCode() // 극단적인 경우엔 그냥 반환(생성 시 최종 검사에서 걸러짐)
+}
+
+// 해당 코드를 쓰는 선거들 조회 (코드로 찾기 · 중복 검사)
+export async function findElectionsByCode(code) {
+  const snap = await getDocs(query(collection(db, ROOT), where('code', '==', code)))
+  const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+  rows.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
+  return rows
+}
+
+export async function isCodeTaken(code) {
+  return (await findElectionsByCode(code)).length > 0
+}
+
+// ── 이 기기에서 만든 선거 (localStorage) ───────────────
+function readMineIds() {
+  try {
+    const raw = localStorage.getItem(MINE_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+function writeMineIds(ids) {
+  try {
+    localStorage.setItem(MINE_KEY, JSON.stringify(ids))
+  } catch {
+    /* 저장 실패해도 앱 동작에는 지장 없음 */
+  }
+}
+
+export function rememberMyElection(id) {
+  const ids = readMineIds()
+  if (!ids.includes(id)) writeMineIds([id, ...ids])
+}
+
+export function forgetMyElection(id) {
+  writeMineIds(readMineIds().filter((x) => x !== id))
+}
+
+// 이 기기에서 만든 선거 목록. 삭제된 선거는 자동으로 정리한다.
+export async function listMyElections() {
+  const ids = readMineIds()
+  if (ids.length === 0) return []
+  const rows = await Promise.all(ids.map((id) => getElection(id).catch(() => null)))
+  const alive = rows.filter(Boolean)
+  if (alive.length !== ids.length) writeMineIds(alive.map((e) => e.id))
+  return alive
 }
 
 // 고유 id 생성
@@ -41,6 +103,7 @@ export async function createElection({ name, code, voteMode, candidates }) {
     candidates, // [{ id, number, name, slogan, pledges, posterUrl }]
     createdAt: serverTimestamp(),
   })
+  rememberMyElection(ref.id) // 이 기기의 "내 선거" 목록에 추가
   return ref.id
 }
 
@@ -144,6 +207,7 @@ export async function deleteElection(electionId) {
   const csnap = await getDocs(collection(db, ROOT, electionId, 'classes'))
   for (const c of csnap.docs) await deleteClass(electionId, c.id)
   await deleteDoc(doc(db, ROOT, electionId))
+  forgetMyElection(electionId) // 이 기기의 "내 선거" 목록에서도 제거
 }
 
 // 관리자용 선거별 현황 요약 (반 수 / 투표인단 수 / 투표 수)
