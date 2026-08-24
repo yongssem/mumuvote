@@ -17,8 +17,20 @@ export default function ElectionNew() {
     return { id: uid(), number, name: '', slogan: '', pledges: '', posterUrl: '', pledgeImageUrl: '' }
   }
 
-  function addCandidate() {
-    setCandidates((cs) => [...cs, blankCandidate(cs.length + 1)])
+  // 후보 수를 −/+ 로 조절 (1~20명). 늘리면 뒤에 추가, 줄이면 뒤에서 제거.
+  function setCount(n) {
+    const target = Math.max(1, Math.min(20, n))
+    setCandidates((cs) => {
+      if (target > cs.length) {
+        const add = []
+        for (let i = cs.length; i < target; i++) add.push(blankCandidate(i + 1))
+        return [...cs, ...add]
+      }
+      if (target < cs.length) {
+        return cs.slice(0, target).map((c, i) => ({ ...c, number: i + 1 }))
+      }
+      return cs
+    })
   }
   function removeCandidate(id) {
     setCandidates((cs) => cs.filter((c) => c.id !== id).map((c, i) => ({ ...c, number: i + 1 })))
@@ -133,10 +145,32 @@ export default function ElectionNew() {
         {/* 후보 목록 */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bold text-lg">입후보자 ({candidates.length})</h2>
-            <button className="btn-ghost" onClick={addCandidate} type="button">
-              + 후보 추가
-            </button>
+            <h2 className="font-bold text-lg">입후보자</h2>
+            {/* 후보 수 스테퍼 (−/+) */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-slate-500 font-semibold mr-1">후보 수</span>
+              <button
+                type="button"
+                className="btn-ghost w-11 h-11 !px-0 text-xl"
+                onClick={() => setCount(candidates.length - 1)}
+                disabled={candidates.length <= 1}
+                aria-label="후보 수 줄이기"
+              >
+                −
+              </button>
+              <span className="w-12 text-center text-xl font-black tabular-nums">
+                {candidates.length}
+              </span>
+              <button
+                type="button"
+                className="btn-ghost w-11 h-11 !px-0 text-xl"
+                onClick={() => setCount(candidates.length + 1)}
+                disabled={candidates.length >= 20}
+                aria-label="후보 수 늘리기"
+              >
+                +
+              </button>
+            </div>
           </div>
 
           <div className="space-y-3">
