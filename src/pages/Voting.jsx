@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { getElection, getClass, submitBallot, updateVoters } from '../lib/elections'
+import { getElection, getClass, submitBallot, updateVoters, picksOf } from '../lib/elections'
 import Footer from '../components/Footer'
 import VoteModeGuide from '../components/VoteModeGuide'
 import { playSuccess, playComplete } from '../lib/sound'
@@ -12,7 +12,7 @@ export default function Voting() {
   const [election, setElection] = useState(null)
   const [voters, setVoters] = useState(null) // 로컬 가변 사본
   const [phase, setPhase] = useState('ready') // ready | voting
-  const [picks, setPicks] = useState({ first: null, second: null, third: null })
+  const [picks, setPicks] = useState([]) // 고른 후보 id 배열 (순서 = 순위)
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
@@ -53,18 +53,18 @@ export default function Voting() {
   }
 
   const ranked = election.voteMode === 'ranked'
-
-  // 현재 단계(순위투표에서 몇 등을 뽑는 중인지)
-  const currentRank = !picks.first ? 'first' : !picks.second ? 'second' : !picks.third ? 'third' : 'confirm'
-  const rankLabel = { first: '1등', second: '2등', third: '3등' }
-  const chosenIds = [picks.first, picks.second, picks.third].filter(Boolean)
+  const need = Math.min(picksOf(election), election.candidates.length) // 골라야 할 수
+  const step = picks.length // 지금 몇 번째를 고르는 중인지 (0부터)
+  const allPicked = step >= need // 다 골랐으면 확인 단계
+  const rankLabel = (i) => (ranked ? `${i + 1}등` : `${i + 1}번째`)
+  const chosenIds = picks
 
   function pickRanked(candidateId) {
-    setPicks((p) => ({ ...p, [currentRank]: candidateId }))
+    setPicks((p) => [...p, candidateId])
   }
 
   function resetPicks() {
-    setPicks({ first: null, second: null, third: null })
+    setPicks([])
   }
 
   async function finishVote(ballotData) {
@@ -124,47 +124,47 @@ export default function Voting() {
           <p className="text-slate-400 font-semibold">{currentVoter.order}번째 · {currentVoter.name}</p>
         </div>
 
-        {ranked ? (
-          currentRank === 'confirm' ? (
-            <RankConfirm
-              election={election}
-              picks={picks}
-              rankLabel={rankLabel}
-              busy={busy}
-              onReset={resetPicks}
-              onSubmit={() => finishVote({ first: picks.first, second: picks.second, third: picks.third })}
-            />
-          ) : (
-            <>
-              <h1 className="text-2xl font-black mb-1">
-                <span className="text-primary">{rankLabel[currentRank]}</span> 후보를 선택하세요
-              </h1>
-              <p className="text-slate-500 mb-3">
-                이미 고른 후보는 제외됩니다. {chosenIds.length > 0 && `(${chosenIds.length}/3 선택)`}
-              </p>
-              <div className="mb-5">
-                <VoteModeGuide voteMode="ranked" variant="compact" />
-              </div>
-              <CandidateGrid
-                candidates={election.candidates.filter((c) => !chosenIds.includes(c.id))}
-                onPick={pickRanked}
-              />
-              {chosenIds.length > 0 && (
-                <button className="btn-ghost mt-5" onClick={resetPicks}>
-                  처음부터 다시
-                </button>
-              )}
-            </>
-          )
+        {allPicked ? (
+          <RankConfirm
+            election={election}
+            picks={picks}
+            ranked={ranked}
+            rankLabel={rankLabel}
+            busy={busy}
+            onReset={resetPicks}
+            onSubmit={() => finishVote({ picks })}
+          />
         ) : (
           <>
-            <h1 className="text-2xl font-black mb-1">지지하는 후보를 선택하세요</h1>
-            <p className="text-slate-500 mb-5">한 명만 선택할 수 있어요.</p>
+            <h1 className="text-2xl font-black mb-1">
+              {need === 1 ? (
+                '지지하는 후보를 선택하세요'
+              ) : (
+                <>
+                  <span className="text-primary">{rankLabel(step)}</span> 후보를 선택하세요
+                </>
+              )}
+            </h1>
+            <p className="text-slate-500 mb-3">
+              {need === 1
+                ? '한 명만 선택할 수 있어요.'
+                : `이미 고른 후보는 제외됩니다. (${step}/${need} 선택)`}
+            </p>
+            <div className="mb-5">
+              <VoteModeGuide election={election} variant="compact" />
+            </div>
             <CandidateGrid
-              candidates={election.candidates}
+              candidates={election.candidates.filter((c) => !chosenIds.includes(c.id))}
               disabled={busy}
-              onPick={(cid) => finishVote({ choice: cid })}
+              onPick={(cid) =>
+                need === 1 ? finishVote({ picks: [cid] }) : pickRanked(cid)
+              }
             />
+            {step > 0 && (
+              <button className="btn-ghost mt-5" onClick={resetPicks}>
+                처음부터 다시
+              </button>
+            )}
           </>
         )}
       </div>
@@ -227,28 +227,23 @@ function CandidateGrid({ candidates, onPick, disabled }) {
   )
 }
 
-// 순위투표 최종 확인
-function RankConfirm({ election, picks, rankLabel, onReset, onSubmit, busy }) {
+// 최종 확인 — 고른 후보를 순서대로 보여준다
+function RankConfirm({ election, picks, ranked, rankLabel, onReset, onSubmit, busy }) {
   const find = (cid) => election.candidates.find((c) => c.id === cid)
-  const rows = [
-    ['first', picks.first],
-    ['second', picks.second],
-    ['third', picks.third],
-  ]
   return (
     <div className="max-w-md mx-auto">
       <h1 className="text-2xl font-black mb-1 text-center">선택 확인</h1>
       <p className="text-slate-500 mb-6 text-center">이대로 투표할까요?</p>
       <div className="space-y-3">
-        {rows.map(([rank, cid]) => {
+        {picks.map((cid, i) => {
           const c = find(cid)
           return (
-            <div key={rank} className="card p-4 flex items-center gap-4">
-              <span className="w-12 h-12 rounded-full bg-primary/10 text-primary font-black flex items-center justify-center">
-                {rankLabel[rank]}
+            <div key={cid} className="card p-4 flex items-center gap-4">
+              <span className="w-12 h-12 shrink-0 rounded-full bg-primary/10 text-primary font-black flex items-center justify-center text-sm">
+                {ranked ? rankLabel(i) : '선택'}
               </span>
-              <div>
-                <p className="font-bold text-lg">{c?.name}</p>
+              <div className="min-w-0">
+                <p className="font-bold text-lg truncate">{c?.name}</p>
                 <p className="text-sm text-slate-500">기호 {c?.number}번</p>
               </div>
             </div>

@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Page from '../components/Page'
 import RevealCountdown, { Confetti } from '../components/RevealCountdown'
-import { getElection, getAllBallots, tally } from '../lib/elections'
+import { getElection, getAllBallots, tally, decideWinners , modeLabel } from '../lib/elections'
+import TieNotice from '../components/TieNotice'
 
 // 전체 결과 — 반별 집계 + 원하는 반만 골라 합산
 export default function ResultsAll() {
@@ -45,6 +46,12 @@ export default function ResultsAll() {
   const includedCount = groups.filter((g) => included[g.klass.id]).length
   const combinedBallots = groups.filter((g) => included[g.klass.id]).reduce((s, g) => s + g.ballots.length, 0)
   const totalBallots = groups.reduce((s, g) => s + g.ballots.length, 0)
+
+  // 합산 결과가 곧 최종 결과 → 여기서만 당선자를 가린다 (반별은 부분 결과라 순위만 표시)
+  const { seats: cSeats, sorted: cSorted, tied: cTied, rule: cRule } = decideWinners(
+    election,
+    combined || []
+  )
 
   // ── 발표 전 대기 화면 ──
   if (phase === 'gate' && groups.length > 0) {
@@ -89,7 +96,7 @@ export default function ResultsAll() {
 
       <div className="mb-4 flex justify-between items-center">
         <p className="text-sm text-slate-500">
-          {ranked ? '순위투표 (1등 3점·2등 2점·3등 1점 합산)' : '단순 선택 (득표수)'}
+          {modeLabel(election)}
         </p>
         <button className="btn-ghost" onClick={load}>↻ 새로고침</button>
       </div>
@@ -104,15 +111,18 @@ export default function ResultsAll() {
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-black text-lg">🧮 합산 결과</h2>
             <span className="text-sm text-slate-500">
-              {includedCount}개 반 · {combinedBallots}표
+              {includedCount}개 반 · {combinedBallots}표 · <b className="text-ink">{cSeats}명 선출</b>
             </span>
           </div>
-          <ResultBars election={election} rows={combined} ranked={ranked} />
+          <ResultBars election={election} rows={cSorted} ranked={ranked} seats={cSeats} />
           <p className="text-xs text-slate-400 mt-3">
             아래 반 목록의 체크박스로 합산에 포함할 반을 고를 수 있어요.
           </p>
         </div>
       )}
+
+      {/* 동점 안내 (합산 기준) */}
+      <TieNotice tied={cTied} rule={cRule} note={election.tieRule?.note} seats={cSeats} />
 
       {/* 반별 결과 */}
       <div className="space-y-4">
@@ -150,16 +160,17 @@ export default function ResultsAll() {
 }
 
 // 결과 막대 목록
-function ResultBars({ rows, ranked, compact }) {
+function ResultBars({ rows, ranked, compact, seats }) {
   if (!rows || rows.length === 0) return <p className="text-sm text-slate-400">집계할 표가 없어요.</p>
   const maxPoints = Math.max(1, ...rows.map((r) => r.points))
+  const winnerCount = seats || 0
   return (
     <div className={compact ? 'space-y-2' : 'space-y-3'}>
       {rows.map((r, i) => (
         <div key={r.candidate.id} className="flex items-center gap-3">
           <span
             className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center font-black text-sm ${
-              i === 0 ? 'bg-accent text-white' : 'bg-slate-100 text-slate-500'
+              i < winnerCount ? 'bg-accent text-white' : 'bg-slate-100 text-slate-500'
             }`}
           >
             {i + 1}
@@ -169,7 +180,7 @@ function ResultBars({ rows, ranked, compact }) {
               <span className="font-bold truncate">
                 <span className="text-slate-400 text-xs mr-1">기호{r.candidate.number}</span>
                 {r.candidate.name}
-                {i === 0 && <span className="ml-1.5 text-accent text-xs font-bold">👑</span>}
+                {i < winnerCount && <span className="ml-1.5 text-accent text-xs font-bold">👑</span>}
               </span>
               <span className="font-black">
                 {r.points}
@@ -178,7 +189,7 @@ function ResultBars({ rows, ranked, compact }) {
             </div>
             <div className="h-2 bg-slate-100 rounded-full mt-1 overflow-hidden">
               <div
-                className={`h-full rounded-full ${i === 0 ? 'bg-accent' : 'bg-primary'}`}
+                className={`h-full rounded-full ${i < winnerCount ? 'bg-accent' : 'bg-primary'}`}
                 style={{ width: `${(r.points / maxPoints) * 100}%` }}
               />
             </div>

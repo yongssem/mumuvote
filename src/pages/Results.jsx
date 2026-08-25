@@ -3,7 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 import Page from '../components/Page'
 import RevealCountdown, { Confetti } from '../components/RevealCountdown'
 import BallotBox from '../components/BallotBox'
-import { getElection, getClass, getBallots, tally } from '../lib/elections'
+import { getElection, getClass, getBallots, tally, decideWinners , modeLabel } from '../lib/elections'
+import TieNotice from '../components/TieNotice'
 
 // 결과 집계 화면
 export default function Results() {
@@ -36,6 +37,7 @@ export default function Results() {
   if (!election || !rows) return <Page title="집계 중…" />
 
   const ranked = election.voteMode === 'ranked'
+  const { seats, sorted, tied, rule } = decideWinners(election, rows)
   const maxPoints = Math.max(1, ...rows.map((r) => r.points))
   const voted = klass?.voters?.filter((v) => v.hasVoted).length || 0
   const total = klass?.voters?.length || 0
@@ -92,7 +94,8 @@ export default function Results() {
 
       <div className="mb-4 flex justify-between items-center">
         <p className="text-sm text-slate-500">
-          {ranked ? '순위투표 (1등 3점·2등 2점·3등 1점 합산)' : '단순 선택 (득표수)'}
+          {modeLabel(election)} ·{' '}
+          <b className="text-ink">{seats}명 선출</b>
         </p>
         <button className="btn-ghost" onClick={load}>
           ↻ 새로고침
@@ -100,15 +103,17 @@ export default function Results() {
       </div>
 
       <div className="space-y-3">
-        {rows.map((r, i) => (
+        {sorted.map((r, i) => {
+          const isWinner = i < seats
+          return (
           <div
             key={r.candidate.id}
-            className={`card p-5 ${i === 0 ? 'ring-2 ring-accent animate-winner' : ''}`}
+            className={`card p-5 ${isWinner ? 'ring-2 ring-accent animate-winner' : 'opacity-75'}`}
           >
             <div className="flex items-center gap-4">
               <span
                 className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center font-black text-lg ${
-                  i === 0 ? 'bg-accent text-white' : 'bg-slate-100 text-slate-500'
+                  isWinner ? 'bg-accent text-white' : 'bg-slate-100 text-slate-500'
                 }`}
               >
                 {i + 1}
@@ -118,7 +123,11 @@ export default function Results() {
                   <h3 className="font-bold text-lg truncate">
                     <span className="text-slate-400 text-sm mr-1">기호{r.candidate.number}</span>
                     {r.candidate.name}
-                    {i === 0 && <span className="ml-2 text-accent text-sm font-bold">👑 1위</span>}
+                    {isWinner && (
+                      <span className="ml-2 text-accent text-sm font-bold">
+                        {seats === 1 ? '👑 당선' : `👑 당선 (${i + 1}위)`}
+                      </span>
+                    )}
                   </h3>
                   <span className="font-black text-xl">
                     {r.points}
@@ -129,20 +138,24 @@ export default function Results() {
                 </div>
                 <div className="h-2.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
                   <div
-                    className={`h-full rounded-full ${i === 0 ? 'bg-accent' : 'bg-primary'}`}
+                    className={`h-full rounded-full ${isWinner ? 'bg-accent' : 'bg-primary'}`}
                     style={{ width: `${(r.points / maxPoints) * 100}%` }}
                   />
                 </div>
                 {ranked && (
                   <p className="text-xs text-slate-400 mt-1.5">
-                    1등 {r.counts.first} · 2등 {r.counts.second} · 3등 {r.counts.third}
+                    {r.rankCounts.map((n, k) => `${k + 1}등 ${n}`).join(' · ')}
                   </p>
                 )}
               </div>
             </div>
           </div>
-        ))}
+          )
+        })}
       </div>
+
+      {/* 동점 안내 */}
+      <TieNotice tied={tied} rule={rule} note={election.tieRule?.note} seats={seats} />
 
       {/* 투표함 열어보기 — 부정선거가 아님을 눈으로 확인 */}
       <div className="card p-5 mt-6 flex flex-col sm:flex-row items-center justify-between gap-3">

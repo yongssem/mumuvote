@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { tally } from '../lib/elections'
+import { tally, ballotPicks, picksOf } from '../lib/elections'
 import { playTick, playSelect, playFanfare } from '../lib/sound'
 
 // 투표함 · 수개표 — 부정선거가 아님을 눈으로 보여주는 화면
@@ -16,11 +16,8 @@ export default function BallotBox({ election, ballots, onClose }) {
 
   // 비밀투표: 이름을 제거하고 순서를 섞는다 (넣은 순서로 누구인지 추측할 수 없도록)
   const anonymous = useMemo(() => {
-    const rows = ballots.map((b) =>
-      ranked
-        ? { first: b.first, second: b.second, third: b.third }
-        : { choice: b.choice }
-    )
+    // 이름·학번을 지우고 고른 후보만 남긴다
+    const rows = ballots.map((b) => ({ picks: ballotPicks(b) }))
     for (let i = rows.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1))
       ;[rows[i], rows[j]] = [rows[j], rows[i]]
@@ -170,7 +167,7 @@ export default function BallotBox({ election, ballots, onClose }) {
             </div>
             <p className="text-xs text-slate-400 mb-4">
               {ranked
-                ? '1등 3점 · 2등 2점 · 3등 1점으로 더합니다.'
+                ? `1등 ${picksOf(election)}점부터 1점씩 낮춰 더합니다.`
                 : '고른 후보에 1표씩 더합니다.'}
             </p>
 
@@ -276,13 +273,7 @@ function BoxGraphic({ count, sealed }) {
 
 // 투표용지 한 장 — 이름 없이 기표 도장만
 function Ballot({ ranked, data, find, seq }) {
-  const rows = ranked
-    ? [
-        ['1등', data.first],
-        ['2등', data.second],
-        ['3등', data.third],
-      ]
-    : [['선택', data.choice]]
+  const rows = (data.picks || []).map((cid, i) => [ranked ? `${i + 1}등` : '선택', cid])
 
   return (
     <div className="animate-ballot bg-white border-[3px] border-ink rounded-xl shadow-[6px_6px_0_0_#0F172A] px-5 py-4 w-full max-w-xs">

@@ -15,6 +15,10 @@ export default function ElectionNew() {
   const [saving, setSaving] = useState(false)
   const [codeErr, setCodeErr] = useState('')
   const [rolling, setRolling] = useState(false)
+  const [picks, setPicks] = useState(3) // 한 사람이 고르는 후보 수
+  const [seats, setSeats] = useState(1) // 선출 인원
+  const [tieType, setTieType] = useState('none') // 동점 처리 기준
+  const [tieNote, setTieNote] = useState('')
 
   // 아직 안 쓰인 코드로 새로 뽑기
   async function rollCode() {
@@ -47,6 +51,9 @@ export default function ElectionNew() {
       }
       return cs
     })
+    // 후보보다 많이 고르거나 뽑을 수는 없다
+    setSeats((s) => Math.min(s, target))
+    setPicks((p) => Math.min(p, target))
   }
   function removeCandidate(id) {
     setCandidates((cs) => cs.filter((c) => c.id !== id).map((c, i) => ({ ...c, number: i + 1 })))
@@ -99,6 +106,9 @@ export default function ElectionNew() {
         name: name.trim(),
         code,
         voteMode,
+        picks: Math.min(picks, candidates.length),
+        seats: Math.min(seats, candidates.length),
+        tieRule: { type: tieType, note: tieNote.trim() },
         candidates: candidates.map((c) => ({
           ...c,
           name: c.name.trim(),
@@ -160,18 +170,115 @@ export default function ElectionNew() {
             <div>
               <label className="label">투표 방식</label>
               <div className="grid grid-cols-2 gap-2">
-                <ModeBtn active={voteMode === 'ranked'} onClick={() => setVoteMode('ranked')}>
+                <ModeBtn active={voteMode === 'ranked'} onClick={() => { setVoteMode('ranked'); setPicks(Math.min(3, candidates.length)) }}>
                   순위투표
-                  <span className="block text-xs font-normal opacity-70">1·2·3등 선택</span>
+                  <span className="block text-xs font-normal opacity-70">순위를 매겨 선택</span>
                 </ModeBtn>
-                <ModeBtn active={voteMode === 'single'} onClick={() => setVoteMode('single')}>
+                <ModeBtn active={voteMode === 'single'} onClick={() => { setVoteMode('single'); setPicks(1) }}>
                   단순 선택
-                  <span className="block text-xs font-normal opacity-70">한 명만 선택</span>
+                  <span className="block text-xs font-normal opacity-70">순위 없이 선택</span>
                 </ModeBtn>
               </div>
               <div className="mt-2">
-                <VoteModeGuide voteMode={voteMode} variant="compact" />
+                <VoteModeGuide election={{ voteMode, picks }} variant="compact" />
               </div>
+            </div>
+          </div>
+
+          {/* 한 사람이 고르는 수 + 선출 인원 + 동점 기준 */}
+          <div className="grid sm:grid-cols-3 gap-4 pt-1">
+            <div>
+              <label className="label">한 사람이 고르는 후보 수</label>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="btn-ghost w-11 h-11 !px-0 text-xl"
+                  onClick={() => setPicks((n) => Math.max(1, n - 1))}
+                  disabled={picks <= 1}
+                  aria-label="고르는 수 줄이기"
+                >
+                  −
+                </button>
+                <span className="w-16 text-center text-xl font-black tabular-nums">{picks}명</span>
+                <button
+                  type="button"
+                  className="btn-ghost w-11 h-11 !px-0 text-xl"
+                  onClick={() => setPicks((n) => Math.min(candidates.length, n + 1))}
+                  disabled={picks >= candidates.length}
+                  aria-label="고르는 수 늘리기"
+                >
+                  +
+                </button>
+              </div>
+              <p className="text-xs text-slate-400 mt-1">
+                {voteMode === 'ranked'
+                  ? `학생 한 명이 ${picks}명을 순서대로 골라요. (1등 ${picks}점 … 마지막 1점)`
+                  : picks === 1
+                  ? '학생 한 명이 후보 1명만 골라요.'
+                  : `학생 한 명이 서로 다른 후보 ${picks}명에게 한 표씩 줘요.`}
+              </p>
+            </div>
+
+            <div>
+              <label className="label">선출 인원 (몇 명을 뽑나요?)</label>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="btn-ghost w-11 h-11 !px-0 text-xl"
+                  onClick={() => setSeats((n) => Math.max(1, n - 1))}
+                  disabled={seats <= 1}
+                  aria-label="선출 인원 줄이기"
+                >
+                  −
+                </button>
+                <span className="w-16 text-center text-xl font-black tabular-nums">
+                  {seats}명
+                </span>
+                <button
+                  type="button"
+                  className="btn-ghost w-11 h-11 !px-0 text-xl"
+                  onClick={() => setSeats((n) => Math.min(candidates.length, n + 1))}
+                  disabled={seats >= candidates.length}
+                  aria-label="선출 인원 늘리기"
+                >
+                  +
+                </button>
+              </div>
+              <p className="text-xs text-slate-400 mt-1">
+                {seats === 1
+                  ? '득표가 가장 높은 1명이 당선됩니다.'
+                  : `득표 상위 ${seats}명이 당선됩니다. (예: 회장 1명 + 부회장 ${seats - 1}명)`}
+              </p>
+            </div>
+
+            <div>
+              <label className="label">동점이 나오면? (미리 정해두기)</label>
+              <select
+                className="input"
+                value={tieType}
+                onChange={(e) => setTieType(e.target.value)}
+              >
+                <option value="none">정하지 않음</option>
+                {voteMode === 'ranked' && (
+                  <option value="firstVotes">1등표를 더 많이 받은 후보</option>
+                )}
+                <option value="runoff">해당 후보들만 재투표(결선)</option>
+                <option value="lottery">추첨(제비뽑기)</option>
+                <option value="elder">생일이 빠른 후보</option>
+                <option value="custom">직접 정한 기준</option>
+              </select>
+              {tieType === 'custom' ? (
+                <input
+                  className="input mt-2 text-sm"
+                  placeholder="예: 학급 회의에서 다시 논의한다"
+                  value={tieNote}
+                  onChange={(e) => setTieNote(e.target.value)}
+                />
+              ) : (
+                <p className="text-xs text-slate-400 mt-1">
+                  결과 화면에 함께 표시돼요. <b>투표 전에</b> 정해두면 뒷말이 없습니다.
+                </p>
+              )}
             </div>
           </div>
         </div>
