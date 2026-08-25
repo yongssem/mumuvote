@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { getElection, getClass, submitSelfBallot, subscribeVotedIds } from '../lib/elections'
+import { getElection, getClass, submitSelfBallot, subscribeVotedIds, picksOf } from '../lib/elections'
 import Footer from '../components/Footer'
 import CandidateDetailModal from '../components/CandidateDetailModal'
 import VoteModeGuide from '../components/VoteModeGuide'
@@ -205,7 +205,7 @@ export default function SelfVote() {
           </p>
           {/* 투표 방식 설명 */}
           <div className="mb-5">
-            <VoteModeGuide voteMode={election.voteMode} />
+            <VoteModeGuide election={election} />
           </div>
           <CandidateGrid candidates={election.candidates} onPick={(cid) => setDetail(election.candidates.find((c) => c.id === cid))} />
           <div className="sticky bottom-4 mt-8 flex flex-col items-center gap-2">
@@ -248,13 +248,15 @@ export default function SelfVote() {
 // 투표 UI (순위/단순 선택) — 제출 시 onSubmit(ballotData)
 function VoteBox({ election, onSubmit, onCancel }) {
   const ranked = election.voteMode === 'ranked'
-  const [picks, setPicks] = useState({ first: null, second: null, third: null })
+  const need = Math.min(picksOf(election), election.candidates.length)
+  const [picks, setPicks] = useState([]) // 고른 후보 id 배열 (순서 = 순위)
   const [busy, setBusy] = useState(false)
 
-  const currentRank = !picks.first ? 'first' : !picks.second ? 'second' : !picks.third ? 'third' : 'confirm'
-  const rankLabel = { first: '1등', second: '2등', third: '3등' }
-  const chosenIds = [picks.first, picks.second, picks.third].filter(Boolean)
-  const reset = () => setPicks({ first: null, second: null, third: null })
+  const step = picks.length
+  const allPicked = step >= need
+  const rankLabel = (i) => (ranked ? `${i + 1}등` : `${i + 1}번째`)
+  const reset = () => setPicks([])
+  const find = (cid) => election.candidates.find((c) => c.id === cid)
 
   async function submit(data) {
     setBusy(true)
@@ -267,22 +269,22 @@ function VoteBox({ election, onSubmit, onCancel }) {
     }
   }
 
-  if (ranked && currentRank === 'confirm') {
-    const find = (cid) => election.candidates.find((c) => c.id === cid)
+  // ── 최종 확인 (2명 이상 고를 때) ──
+  if (allPicked && need > 1) {
     return (
       <div className="max-w-md mx-auto mt-4">
         <h1 className="text-2xl font-black mb-1 text-center">선택 확인</h1>
         <p className="text-slate-500 mb-6 text-center">이대로 투표할까요?</p>
         <div className="space-y-3">
-          {[['first', picks.first], ['second', picks.second], ['third', picks.third]].map(([rank, cid]) => {
+          {picks.map((cid, i) => {
             const c = find(cid)
             return (
-              <div key={rank} className="card p-4 flex items-center gap-4">
-                <span className="w-12 h-12 rounded-full bg-primary/10 text-primary font-black flex items-center justify-center">
-                  {rankLabel[rank]}
+              <div key={cid} className="card p-4 flex items-center gap-4">
+                <span className="w-12 h-12 shrink-0 rounded-full bg-primary/10 text-primary font-black flex items-center justify-center text-sm">
+                  {ranked ? rankLabel(i) : '선택'}
                 </span>
-                <div>
-                  <p className="font-bold text-lg">{c?.name}</p>
+                <div className="min-w-0">
+                  <p className="font-bold text-lg truncate">{c?.name}</p>
                   <p className="text-sm text-slate-500">기호 {c?.number}번</p>
                 </div>
               </div>
@@ -291,11 +293,7 @@ function VoteBox({ election, onSubmit, onCancel }) {
         </div>
         <div className="flex gap-2 mt-6">
           <button className="btn-ghost flex-1" onClick={reset} disabled={busy}>다시 선택</button>
-          <button
-            className="btn-primary flex-1"
-            disabled={busy}
-            onClick={() => submit({ first: picks.first, second: picks.second, third: picks.third })}
-          >
+          <button className="btn-primary flex-1" disabled={busy} onClick={() => submit({ picks })}>
             {busy ? '제출 중…' : '투표 제출'}
           </button>
         </div>
@@ -305,36 +303,31 @@ function VoteBox({ election, onSubmit, onCancel }) {
 
   return (
     <div className="mt-4">
-      {ranked ? (
-        <>
-          <h1 className="text-2xl font-black mb-1 text-center">
-            <span className="text-primary">{rankLabel[currentRank]}</span> 후보를 선택하세요
-          </h1>
-          <p className="text-slate-500 mb-3 text-center">
-            이미 고른 후보는 제외됩니다. {chosenIds.length > 0 && `(${chosenIds.length}/3 선택)`}
-          </p>
-          <div className="mb-5">
-            <VoteModeGuide voteMode="ranked" variant="compact" />
-          </div>
-          <CandidateGrid
-            candidates={election.candidates.filter((c) => !chosenIds.includes(c.id))}
-            onPick={(cid) => setPicks((p) => ({ ...p, [currentRank]: cid }))}
-          />
-        </>
-      ) : (
-        <>
-          <h1 className="text-2xl font-black mb-1 text-center">지지하는 후보를 선택하세요</h1>
-          <p className="text-slate-500 mb-5 text-center">한 명만 선택할 수 있어요.</p>
-          <CandidateGrid
-            candidates={election.candidates}
-            disabled={busy}
-            onPick={(cid) => submit({ choice: cid })}
-          />
-        </>
-      )}
+      <h1 className="text-2xl font-black mb-1 text-center">
+        {need === 1 ? (
+          '지지하는 후보를 선택하세요'
+        ) : (
+          <>
+            <span className="text-primary">{rankLabel(step)}</span> 후보를 선택하세요
+          </>
+        )}
+      </h1>
+      <p className="text-slate-500 mb-3 text-center">
+        {need === 1
+          ? '한 명만 선택할 수 있어요.'
+          : `이미 고른 후보는 제외됩니다. (${step}/${need} 선택)`}
+      </p>
+      <div className="mb-5">
+        <VoteModeGuide election={election} variant="compact" />
+      </div>
+      <CandidateGrid
+        candidates={election.candidates.filter((c) => !picks.includes(c.id))}
+        disabled={busy}
+        onPick={(cid) => (need === 1 ? submit({ picks: [cid] }) : setPicks((p) => [...p, cid]))}
+      />
       <div className="flex justify-center mt-6">
-        <button className="btn-ghost" onClick={chosenIds.length > 0 ? reset : onCancel} disabled={busy}>
-          {chosenIds.length > 0 ? '처음부터 다시' : '후보 다시 보기'}
+        <button className="btn-ghost" onClick={step > 0 ? reset : onCancel} disabled={busy}>
+          {step > 0 ? '처음부터 다시' : '후보 다시 보기'}
         </button>
       </div>
     </div>

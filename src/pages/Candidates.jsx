@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import Page from '../components/Page'
 import CandidateDetailModal from '../components/CandidateDetailModal'
 import VoteModeGuide from '../components/VoteModeGuide'
-import { getElection, getClass } from '../lib/elections'
+import { getElection, getClass, modeLabel } from '../lib/elections'
 
 // 입후보자 관찰 화면 — 카드 클릭 시 공약·포스터 상세 보기, 하단에 투표시작
 export default function Candidates() {
@@ -53,7 +53,7 @@ export default function Candidates() {
 
       {/* 투표 방식 설명 — 투표 전에 방식을 이해하도록 */}
       <div className="mb-5">
-        <VoteModeGuide voteMode={election.voteMode} />
+        <VoteModeGuide election={election} />
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -119,7 +119,7 @@ export default function Candidates() {
         <div>
           <p className="font-bold text-lg">한 대로 진행 (키오스크)</p>
           <p className="text-slate-500 text-sm">
-            투표 방식: {election.voteMode === 'ranked' ? '순위투표 (1·2·3등)' : '단순 선택'} · 남은
+            투표 방식: {modeLabel(election)} · 남은
             투표자 {remaining}명
           </p>
         </div>
