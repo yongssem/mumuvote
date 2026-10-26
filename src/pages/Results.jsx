@@ -51,7 +51,7 @@ export default function Results() {
       >
         <div className="card p-10 text-center">
           <div className="text-6xl mb-4">🗳️</div>
-          <h2 className="text-2xl font-black">개표가 끝났습니다</h2>
+          <h2 className="text-2xl font-black">현재까지의 투표를 집계했어요</h2>
           <p className="text-slate-500 mt-2">
             준비되면 아래 버튼을 눌러 결과를 발표하세요.
           </p>
@@ -95,7 +95,7 @@ export default function Results() {
       <div className="mb-4 flex justify-between items-center">
         <p className="text-sm text-slate-500">
           {modeLabel(election)} ·{' '}
-          <b className="text-ink">{seats}명 선출</b>
+          <b className="text-ink">상위 {seats}개 비교</b>
         </p>
         <button className="btn-ghost" onClick={load}>
           ↻ 새로고침
@@ -104,7 +104,7 @@ export default function Results() {
 
       <div className="space-y-3">
         {sorted.map((r, i) => {
-          const isWinner = i < seats
+          const isWinner = ballots.length > 0 && i < seats && !tied.some(t => t.candidate.id === r.candidate.id)
           return (
           <div
             key={r.candidate.id}
@@ -121,17 +121,17 @@ export default function Results() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline justify-between gap-2">
                   <h3 className="font-bold text-lg truncate">
-                    <span className="text-slate-400 text-sm mr-1">기호{r.candidate.number}</span>
+                    <span className="text-slate-500 text-sm mr-1">기호{r.candidate.number}</span>
                     {r.candidate.name}
                     {isWinner && (
                       <span className="ml-2 text-accent text-sm font-bold">
-                        {seats === 1 ? '👑 당선' : `👑 당선 (${i + 1}위)`}
+                        {seats === 1 ? '✓ 상위 선택지' : `👑 선정 (${i + 1}위)`}
                       </span>
                     )}
                   </h3>
                   <span className="font-black text-xl">
                     {r.points}
-                    <span className="text-sm text-slate-400 font-normal ml-0.5">
+                    <span className="text-sm text-slate-500 font-normal ml-0.5">
                       {ranked ? '점' : '표'}
                     </span>
                   </span>
@@ -143,7 +143,7 @@ export default function Results() {
                   />
                 </div>
                 {ranked && (
-                  <p className="text-xs text-slate-400 mt-1.5">
+                  <p className="text-xs text-slate-500 mt-1.5">
                     {r.rankCounts.map((n, k) => `${k + 1}등 ${n}`).join(' · ')}
                   </p>
                 )}
@@ -155,9 +155,9 @@ export default function Results() {
       </div>
 
       {/* 동점 안내 */}
-      <TieNotice tied={tied} rule={rule} note={election.tieRule?.note} seats={seats} />
+      {ballots.length > 0 && <TieNotice tied={tied} rule={rule} note={election.tieRule?.note} seats={seats} />}
 
-      {/* 투표함 열어보기 — 부정선거가 아님을 눈으로 확인 */}
+      {/* 투표함 열어보기 — 부정투표가 아님을 눈으로 확인 */}
       <div className="card p-5 mt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div>
           <p className="font-bold text-lg">🗳️ 투표함 열어보기 · 수개표</p>
@@ -180,7 +180,7 @@ export default function Results() {
 
       <div className="flex gap-2 mt-8">
         <button className="btn-ghost flex-1" onClick={() => nav('/elections')}>
-          선거 목록으로
+          투표 목록으로
         </button>
         <button
           className="btn-primary flex-1"

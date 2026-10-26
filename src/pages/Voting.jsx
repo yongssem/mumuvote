@@ -12,7 +12,7 @@ export default function Voting() {
   const [election, setElection] = useState(null)
   const [voters, setVoters] = useState(null) // 로컬 가변 사본
   const [phase, setPhase] = useState('ready') // ready | voting
-  const [picks, setPicks] = useState([]) // 고른 후보 id 배열 (순서 = 순위)
+  const [picks, setPicks] = useState([]) // 고른 선택지 id 배열 (순서 = 순위)
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
@@ -138,17 +138,17 @@ export default function Voting() {
           <>
             <h1 className="text-2xl font-black mb-1">
               {need === 1 ? (
-                '지지하는 후보를 선택하세요'
+                '지지하는 선택지를 선택하세요'
               ) : (
                 <>
-                  <span className="text-primary">{rankLabel(step)}</span> 후보를 선택하세요
+                  <span className="text-primary">{rankLabel(step)}</span> 선택지를 선택하세요
                 </>
               )}
             </h1>
             <p className="text-slate-500 mb-3">
               {need === 1
-                ? '한 명만 선택할 수 있어요.'
-                : `이미 고른 후보는 제외됩니다. (${step}/${need} 선택)`}
+                ? '한 개만 선택할 수 있어요.'
+                : `이미 고른 선택지는 제외됩니다. (${step}/${need} 선택)`}
             </p>
             <div className="mb-5">
               <VoteModeGuide election={election} variant="compact" />
@@ -196,7 +196,7 @@ function ProgressBar({ done, total, name }) {
   )
 }
 
-// 후보 선택 그리드
+// 선택지 선택 그리드
 function CandidateGrid({ candidates, onPick, disabled }) {
   return (
     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -227,7 +227,7 @@ function CandidateGrid({ candidates, onPick, disabled }) {
   )
 }
 
-// 최종 확인 — 고른 후보를 순서대로 보여준다
+// 최종 확인 — 고른 선택지를 순서대로 보여준다
 function RankConfirm({ election, picks, ranked, rankLabel, onReset, onSubmit, busy }) {
   const find = (cid) => election.candidates.find((c) => c.id === cid)
   return (

@@ -6,8 +6,8 @@ import CandidateDetailModal from '../components/CandidateDetailModal'
 import VoteModeGuide from '../components/VoteModeGuide'
 import { playComplete, playError } from '../lib/sound'
 
-// 개별 투표 — 학생이 자기 태블릿에서 비밀 링크로 접속해 각자 투표
-// 흐름: 이름 선택 → 후보 관찰 → 투표 → 완료
+// 개별 투표 — 학생이 자기 태블릿에서 개인 참여 링크로 접속해 각자 투표
+// 흐름: 이름 선택 → 선택지 관찰 → 투표 → 완료
 export default function SelfVote() {
   const { id, classId } = useParams()
   const [election, setElection] = useState(null)
@@ -15,8 +15,8 @@ export default function SelfVote() {
   const [votedIds, setVotedIds] = useState(new Set())
   const [voter, setVoter] = useState(null) // 선택된 본인
   const [phase, setPhase] = useState('pick') // pick | observe | vote | done
-  const [detail, setDetail] = useState(null) // 후보 상세 모달
-  const [pending, setPending] = useState(null) // 학번 확인 대기 중인 후보
+  const [detail, setDetail] = useState(null) // 선택지 상세 모달
+  const [pending, setPending] = useState(null) // 학번 확인 대기 중인 선택지
   const [codeInput, setCodeInput] = useState('')
   const [codeErr, setCodeErr] = useState('')
 
@@ -193,15 +193,15 @@ export default function SelfVote() {
     )
   }
 
-  // ── 후보 관찰 화면 ──
+  // ── 선택지 관찰 화면 ──
   if (phase === 'observe') {
     return (
       <Shell election={election} klass={klass} done={votedCount} total={voters.length}>
         <div className="flex-1 max-w-4xl w-full mx-auto px-4 py-6">
           <p className="text-slate-400 font-semibold text-center">{voter.name}님</p>
-          <h1 className="text-2xl font-black text-center mt-1">후보를 살펴보세요</h1>
+          <h1 className="text-2xl font-black text-center mt-1">선택지를 살펴보세요</h1>
           <p className="text-slate-500 text-center mt-1 mb-4">
-            카드를 눌러 공약과 포스터를 확인한 뒤, 아래 버튼으로 투표를 시작하세요.
+            카드를 눌러 설명과 이미지를 확인한 뒤, 아래 버튼으로 투표를 시작하세요.
           </p>
           {/* 투표 방식 설명 */}
           <div className="mb-5">
@@ -249,7 +249,7 @@ export default function SelfVote() {
 function VoteBox({ election, onSubmit, onCancel }) {
   const ranked = election.voteMode === 'ranked'
   const need = Math.min(picksOf(election), election.candidates.length)
-  const [picks, setPicks] = useState([]) // 고른 후보 id 배열 (순서 = 순위)
+  const [picks, setPicks] = useState([]) // 고른 선택지 id 배열 (순서 = 순위)
   const [busy, setBusy] = useState(false)
 
   const step = picks.length
@@ -305,17 +305,17 @@ function VoteBox({ election, onSubmit, onCancel }) {
     <div className="mt-4">
       <h1 className="text-2xl font-black mb-1 text-center">
         {need === 1 ? (
-          '지지하는 후보를 선택하세요'
+          '지지하는 선택지를 선택하세요'
         ) : (
           <>
-            <span className="text-primary">{rankLabel(step)}</span> 후보를 선택하세요
+            <span className="text-primary">{rankLabel(step)}</span> 선택지를 선택하세요
           </>
         )}
       </h1>
       <p className="text-slate-500 mb-3 text-center">
         {need === 1
-          ? '한 명만 선택할 수 있어요.'
-          : `이미 고른 후보는 제외됩니다. (${step}/${need} 선택)`}
+          ? '한 개만 선택할 수 있어요.'
+          : `이미 고른 선택지는 제외됩니다. (${step}/${need} 선택)`}
       </p>
       <div className="mb-5">
         <VoteModeGuide election={election} variant="compact" />
@@ -327,14 +327,14 @@ function VoteBox({ election, onSubmit, onCancel }) {
       />
       <div className="flex justify-center mt-6">
         <button className="btn-ghost" onClick={step > 0 ? reset : onCancel} disabled={busy}>
-          {step > 0 ? '처음부터 다시' : '후보 다시 보기'}
+          {step > 0 ? '처음부터 다시' : '선택지 다시 보기'}
         </button>
       </div>
     </div>
   )
 }
 
-// 후보 선택 그리드
+// 선택지 선택 그리드
 function CandidateGrid({ candidates, onPick, disabled }) {
   return (
     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

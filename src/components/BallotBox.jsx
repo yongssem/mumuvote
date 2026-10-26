@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { tally, ballotPicks, picksOf } from '../lib/elections'
 import { playTick, playSelect, playFanfare } from '../lib/sound'
 
-// 투표함 · 수개표 — 부정선거가 아님을 눈으로 보여주는 화면
+// 투표함 · 수개표 — 부정투표가 아님을 눈으로 보여주는 화면
 // 1) 봉인된 투표함에 투표용지가 쌓여 있고
 // 2) [개표 시작]을 누르면 한 장씩 꺼내 기표 도장을 보여주며
 // 3) 옆의 집계판이 실시간으로 올라가고, 마지막에 최종 결과와 일치하는지 확인한다.
@@ -16,7 +16,7 @@ export default function BallotBox({ election, ballots, onClose }) {
 
   // 비밀투표: 이름을 제거하고 순서를 섞는다 (넣은 순서로 누구인지 추측할 수 없도록)
   const anonymous = useMemo(() => {
-    // 이름·학번을 지우고 고른 후보만 남긴다
+    // 이름·학번을 지우고 고른 선택지만 남긴다
     const rows = ballots.map((b) => ({ picks: ballotPicks(b) }))
     for (let i = rows.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1))
@@ -168,7 +168,7 @@ export default function BallotBox({ election, ballots, onClose }) {
             <p className="text-xs text-slate-400 mb-4">
               {ranked
                 ? `1등 ${picksOf(election)}점부터 1점씩 낮춰 더합니다.`
-                : '고른 후보에 1표씩 더합니다.'}
+                : '고른 선택지에 1표씩 더합니다.'}
             </p>
 
             <div className="space-y-3">
@@ -228,7 +228,7 @@ export default function BallotBox({ election, ballots, onClose }) {
   )
 }
 
-// 투표함 그림 — 실제 선거처럼 '투명 투표함'이라 안에 든 용지가 그대로 보인다
+// 투표함 그림 — 실제 투표처럼 '투명 투표함'이라 안에 든 용지가 그대로 보인다
 function BoxGraphic({ count, sealed }) {
   const papers = Math.min(count, 15)
   return (

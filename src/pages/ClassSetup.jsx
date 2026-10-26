@@ -73,6 +73,7 @@ export default function ClassSetup() {
             <label className="label">반 이름</label>
             <input
               className="input"
+              aria-label="반 이름"
               placeholder="예: 5학년 3반"
               value={className}
               onChange={(e) => setClassName(e.target.value)}
@@ -84,7 +85,7 @@ export default function ClassSetup() {
               <label className="label mb-0">투표인단 명단 (학번 + 이름)</label>
               <span className="text-sm font-semibold text-primary">{parsed.length}명</span>
             </div>
-            <p className="text-xs text-slate-400 mb-2">
+            <p className="text-xs text-slate-500 mb-2">
               한 줄에 한 명씩 <b>학번 이름</b> 형식으로 입력하세요. 예) <b>6101 김민준</b>
               <br />
               학번은 개별 투표에서 <b>본인 확인용</b>으로 쓰여요(실수 클릭 방지). 입력한{' '}
@@ -92,6 +93,7 @@ export default function ClassSetup() {
             </p>
             <textarea
               className="input min-h-[240px] font-mono text-sm"
+              aria-label="투표인단 명단"
               placeholder={'6101 김민준\n6102 이서연\n6103 박도윤\n6104 최지우\n…'}
               value={raw}
               onChange={(e) => setRaw(e.target.value)}
@@ -117,7 +119,7 @@ export default function ClassSetup() {
               disabled={!className.trim() || parsed.length === 0 || saving}
               onClick={save}
             >
-              {saving ? '저장 중…' : '명단 등록하고 후보 보기 →'}
+              {saving ? '저장 중…' : '명단 등록하고 선택지 보기 →'}
             </button>
           </div>
         </div>
@@ -161,7 +163,7 @@ export default function ClassSetup() {
 
       <div className="flex gap-2 mt-8">
         <button className="btn-ghost flex-1" onClick={() => nav('/elections')}>
-          선거 목록으로
+          투표 목록으로
         </button>
         <button className="btn-ghost flex-1" onClick={() => nav(`/elections/${id}/results`)}>
           🧮 전체 결과 보기

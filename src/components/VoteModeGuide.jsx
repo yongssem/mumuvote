@@ -16,24 +16,24 @@ export default function VoteModeGuide({ election, voteMode, variant = 'full' }) 
       <div className="rounded-xl bg-primary/5 border-2 border-primary/20 px-4 py-2.5 text-sm text-ink">
         {ranked ? (
           <>
-            <b className="text-primary">순위투표</b> · 후보 <b>{n}명</b>을 순서대로 골라요.{' '}
+            <b className="text-primary">순위투표</b> · 선택지 <b>{n}개</b>을 순서대로 골라요.{' '}
             {ranks.map((r, i) => (
               <span key={r.label}>
                 {i > 0 && ', '}
                 {r.label} <b>{r.point}점</b>
               </span>
             ))}{' '}
-            — 점수를 모두 더해 가장 높은 후보가 당선돼요.
+            — 점수를 모두 더해 점수 순으로 비교해요.
           </>
         ) : n === 1 ? (
           <>
-            <b className="text-primary">단순 선택</b> · 후보 <b>한 명</b>만 골라요. 표를 가장 많이
-            받은 후보가 당선돼요.
+            <b className="text-primary">단순 선택</b> · 선택지 <b>한 개</b>만 골라요. 표를 가장 많이
+            받은 선택지부터 비교해요.
           </>
         ) : (
           <>
-            <b className="text-primary">단순 선택</b> · <b>서로 다른 후보 {n}명</b>에게 한 표씩
-            줘요. 표를 가장 많이 받은 후보가 당선돼요.
+            <b className="text-primary">단순 선택</b> · <b>서로 다른 선택지 {n}개</b>에게 한 표씩
+            줘요. 표를 가장 많이 받은 선택지부터 비교해요.
           </>
         )}
       </div>
@@ -52,7 +52,7 @@ export default function VoteModeGuide({ election, voteMode, variant = 'full' }) 
       {ranked ? (
         <>
           <p className="text-slate-600 text-sm">
-            좋아하는 후보를 <b>{ranks.map((r) => r.label).join(' · ')}</b> 순서대로 골라요. 등수마다
+            좋아하는 선택지를 <b>{ranks.map((r) => r.label).join(' · ')}</b> 순서대로 골라요. 등수마다
             점수가 다릅니다.
           </p>
           <div className={`grid gap-2 mt-4 grid-cols-${Math.min(n, 3)}`} style={{ gridTemplateColumns: `repeat(${Math.min(n, 4)}, minmax(0, 1fr))` }}>
@@ -74,7 +74,7 @@ export default function VoteModeGuide({ election, voteMode, variant = 'full' }) 
             ))}
           </div>
           <p className="text-sm text-slate-600 mt-4">
-            반 학생 모두의 점수를 <b>전부 더해서</b>, 합계가 가장 높은 후보가 당선됩니다. 그래서
+            반 학생 모두의 점수를 <b>전부 더해서</b>, 합계가 높은 선택지부터 비교해요. 그래서
             1등을 적게 받아도 아래 등수를 골고루 받으면 순위가 올라갈 수 있어요.
           </p>
         </>
@@ -83,16 +83,16 @@ export default function VoteModeGuide({ election, voteMode, variant = 'full' }) 
           <p className="text-slate-600 text-sm">
             {n === 1 ? (
               <>
-                후보 <b>한 명</b>만 고르는 방식이에요. 고른 후보가 <b>1표</b>를 받습니다.
+                선택지 <b>한 개</b>만 고르는 방식이에요. 고른 선택지가 <b>1표</b>를 받습니다.
               </>
             ) : (
               <>
-                <b>서로 다른 후보 {n}명</b>을 고르는 방식이에요. 고른 후보마다 <b>1표씩</b>{' '}
+                <b>서로 다른 선택지 {n}개</b>을 고르는 방식이에요. 고른 선택지마다 <b>1표씩</b>{' '}
                 받습니다. 등수 구분은 없어요.
               </>
             )}
           </p>
-          <p className="text-sm text-slate-600 mt-3">표를 가장 많이 받은 후보가 당선됩니다.</p>
+          <p className="text-sm text-slate-600 mt-3">표를 가장 많이 받은 선택지부터 비교해요.</p>
         </>
       )}
     </div>

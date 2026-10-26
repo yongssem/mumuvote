@@ -5,7 +5,7 @@ import CandidateDetailModal from '../components/CandidateDetailModal'
 import VoteModeGuide from '../components/VoteModeGuide'
 import { getElection, getClass, modeLabel } from '../lib/elections'
 
-// 입후보자 관찰 화면 — 카드 클릭 시 공약·포스터 상세 보기, 하단에 투표시작
+// 선택지 관찰 화면 — 카드 클릭 시 상세 설명·포스터 상세 보기, 하단에 투표시작
 export default function Candidates() {
   const { id, classId } = useParams()
   const nav = useNavigate()
@@ -14,7 +14,7 @@ export default function Candidates() {
   const [detail, setDetail] = useState(null)
   const [copied, setCopied] = useState(false)
 
-  // 개별 투표(자기 기기) 비밀 링크
+  // 개별 투표(자기 기기) 개인 참여 링크
   const selfLink = `${window.location.origin}/self/${id}/${classId}`
 
   async function copyLink() {
@@ -44,11 +44,11 @@ export default function Candidates() {
 
   return (
     <Page
-      title="입후보자 살펴보기"
+      title="선택지 살펴보기"
       subtitle={`${election.name}${klass ? ' · ' + klass.name : ''}`}
     >
       <p className="text-slate-500 mb-4">
-        후보 카드를 눌러 <b>공약과 포스터</b>를 확인하세요.
+        선택지 카드를 눌러 <b>설명과 이미지</b>를 확인하세요.
       </p>
 
       {/* 투표 방식 설명 — 투표 전에 방식을 이해하도록 */}
@@ -70,14 +70,14 @@ export default function Candidates() {
                 <div className="text-slate-300 text-5xl font-black">{c.number}</div>
               )}
               <span className="absolute top-2 left-2 bg-primary text-white text-xs font-bold rounded-full px-2.5 py-1">
-                기호 {c.number}번
+                선택지 {c.number}
               </span>
             </div>
             <div className="p-4">
               <h3 className="font-bold text-lg group-hover:text-primary">{c.name}</h3>
               {c.slogan && <p className="text-sm text-slate-500 mt-1 line-clamp-2">{c.slogan}</p>}
               <span className="inline-block mt-3 text-sm text-primary font-semibold">
-                공약 보기 →
+                자세히 보기 →
               </span>
             </div>
           </button>
@@ -91,7 +91,7 @@ export default function Candidates() {
           <div className="flex-1 min-w-0">
             <p className="font-bold text-lg">개별 투표 (자기 기기)</p>
             <p className="text-slate-500 text-sm mt-0.5">
-              이 <b>비밀 링크</b>를 학생들에게 공유하면, 각자 자기 태블릿으로 이름을 선택해 비밀
+              이 <b>개인 참여 링크</b>를 학생들에게 공유하면, 각자 자기 태블릿으로 이름을 선택해 
               투표를 합니다. 결과는 이 반으로 집계돼요.
             </p>
             <div className="flex flex-col sm:flex-row gap-2 mt-3">
@@ -140,7 +140,7 @@ export default function Candidates() {
         </button>
       </div>
 
-      {/* 후보 상세 모달 */}
+      {/* 선택지 상세 모달 */}
       <CandidateDetailModal candidate={detail} onClose={() => setDetail(null)} />
     </Page>
   )
