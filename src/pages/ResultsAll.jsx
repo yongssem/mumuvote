@@ -47,7 +47,7 @@ export default function ResultsAll() {
   const combinedBallots = groups.filter((g) => included[g.klass.id]).reduce((s, g) => s + g.ballots.length, 0)
   const totalBallots = groups.reduce((s, g) => s + g.ballots.length, 0)
 
-  // 합산 결과가 곧 최종 결과 → 여기서만 당선자를 가린다 (반별은 부분 결과라 순위만 표시)
+  // 합산 결과가 곧 최종 결과 → 여기서만 선정자를 가린다 (반별은 부분 결과라 순위만 표시)
   const { seats: cSeats, sorted: cSorted, tied: cTied, rule: cRule } = decideWinners(
     election,
     combined || []
@@ -59,7 +59,7 @@ export default function ResultsAll() {
       <Page title="전체 결과 · 반별 집계" subtitle={election.name}>
         <div className="card p-10 text-center">
           <div className="text-6xl mb-4">🏆</div>
-          <h2 className="text-2xl font-black">전체 개표가 끝났습니다</h2>
+          <h2 className="text-2xl font-black">전체 현재까지의 투표를 집계했어요</h2>
           <p className="text-slate-500 mt-2">
             {groups.length}개 반 · 총 {totalBallots}표 · 준비되면 결과를 발표하세요.
           </p>
@@ -111,18 +111,18 @@ export default function ResultsAll() {
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-black text-lg">🧮 합산 결과</h2>
             <span className="text-sm text-slate-500">
-              {includedCount}개 반 · {combinedBallots}표 · <b className="text-ink">{cSeats}명 선출</b>
+              {includedCount}개 반 · {combinedBallots}표 · <b className="text-ink">상위 {cSeats}개 비교</b>
             </span>
           </div>
-          <ResultBars election={election} rows={cSorted} ranked={ranked} seats={cSeats} />
-          <p className="text-xs text-slate-400 mt-3">
+          <ResultBars election={election} rows={cSorted} ranked={ranked} seats={combinedBallots > 0 ? cSeats : 0} tied={cTied} />
+          <p className="text-xs text-slate-500 mt-3">
             아래 반 목록의 체크박스로 합산에 포함할 반을 고를 수 있어요.
           </p>
         </div>
       )}
 
       {/* 동점 안내 (합산 기준) */}
-      <TieNotice tied={cTied} rule={cRule} note={election.tieRule?.note} seats={cSeats} />
+      {combinedBallots > 0 && <TieNotice tied={cTied} rule={cRule} note={election.tieRule?.note} seats={cSeats} />}
 
       {/* 반별 결과 */}
       <div className="space-y-4">
@@ -153,15 +153,15 @@ export default function ResultsAll() {
       </div>
 
       <div className="flex gap-2 mt-8">
-        <button className="btn-ghost flex-1" onClick={() => nav('/elections')}>선거 목록으로</button>
+        <button className="btn-ghost flex-1" onClick={() => nav('/elections')}>투표 목록으로</button>
       </div>
     </Page>
   )
 }
 
 // 결과 막대 목록
-function ResultBars({ rows, ranked, compact, seats }) {
-  if (!rows || rows.length === 0) return <p className="text-sm text-slate-400">집계할 표가 없어요.</p>
+function ResultBars({ rows, ranked, compact, seats, tied = [] }) {
+  if (!rows || rows.length === 0) return <p className="text-sm text-slate-500">집계할 표가 없어요.</p>
   const maxPoints = Math.max(1, ...rows.map((r) => r.points))
   const winnerCount = seats || 0
   return (
@@ -170,7 +170,7 @@ function ResultBars({ rows, ranked, compact, seats }) {
         <div key={r.candidate.id} className="flex items-center gap-3">
           <span
             className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center font-black text-sm ${
-              i < winnerCount ? 'bg-accent text-white' : 'bg-slate-100 text-slate-500'
+              i < winnerCount && !tied.some(t => t.candidate.id === r.candidate.id) ? 'bg-accent text-white' : 'bg-slate-100 text-slate-500'
             }`}
           >
             {i + 1}
@@ -178,18 +178,18 @@ function ResultBars({ rows, ranked, compact, seats }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline justify-between gap-2">
               <span className="font-bold truncate">
-                <span className="text-slate-400 text-xs mr-1">기호{r.candidate.number}</span>
+                <span className="text-slate-500 text-xs mr-1">기호{r.candidate.number}</span>
                 {r.candidate.name}
-                {i < winnerCount && <span className="ml-1.5 text-accent text-xs font-bold">👑</span>}
+                {i < winnerCount && !tied.some(t => t.candidate.id === r.candidate.id) && <span className="ml-1.5 text-accent text-xs font-bold">👑</span>}
               </span>
               <span className="font-black">
                 {r.points}
-                <span className="text-xs text-slate-400 font-normal ml-0.5">{ranked ? '점' : '표'}</span>
+                <span className="text-xs text-slate-500 font-normal ml-0.5">{ranked ? '점' : '표'}</span>
               </span>
             </div>
             <div className="h-2 bg-slate-100 rounded-full mt-1 overflow-hidden">
               <div
-                className={`h-full rounded-full ${i < winnerCount ? 'bg-accent' : 'bg-primary'}`}
+                className={`h-full rounded-full ${i < winnerCount && !tied.some(t => t.candidate.id === r.candidate.id) ? 'bg-accent' : 'bg-primary'}`}
                 style={{ width: `${(r.points / maxPoints) * 100}%` }}
               />
             </div>

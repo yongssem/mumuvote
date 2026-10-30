@@ -6,7 +6,7 @@ import { listElections, getElectionStats, deleteElection, deleteClass } from '..
 const ADMIN_PW = '6006'
 const AUTH_KEY = 'mumuvote_admin'
 
-// 슈퍼 관리자 — 등록된 선거 관리 (코드 열람 · 현황 확인 · 삭제)
+// 슈퍼 관리자 — 등록된 투표 관리 (코드 열람 · 현황 확인 · 삭제)
 export default function SuperAdmin() {
   const [authed, setAuthed] = useState(() => sessionStorage.getItem(AUTH_KEY) === '1')
 
@@ -111,12 +111,12 @@ function AdminBoard() {
   return (
     <Page
       title="슈퍼 관리자"
-      subtitle="등록된 선거의 코드·현황을 확인하고 삭제할 수 있어요."
+      subtitle="등록된 투표의 코드·현황을 확인하고 삭제할 수 있어요."
       maxWidth="max-w-4xl"
     >
       <div className="flex justify-between items-center mb-4">
         <p className="text-sm text-slate-500">
-          {rows === null ? '불러오는 중…' : `선거 ${rows.length}개`}
+          {rows === null ? '불러오는 중…' : `투표 ${rows.length}개`}
         </p>
         <div className="flex gap-2">
           <button className="btn-ghost" onClick={load}>
@@ -135,7 +135,7 @@ function AdminBoard() {
       </div>
 
       {rows && rows.length === 0 && (
-        <div className="card p-10 text-center text-slate-500">등록된 선거가 없습니다.</div>
+        <div className="card p-10 text-center text-slate-500">등록된 투표가 없습니다.</div>
       )}
 
       <div className="space-y-4">
@@ -145,7 +145,7 @@ function AdminBoard() {
               <div className="min-w-0">
                 <h3 className="font-black text-lg text-ink">{election.name}</h3>
                 <p className="text-sm text-slate-500 mt-0.5">
-                  {election.voteMode === 'ranked' ? '순위투표(1·2·3등)' : '단순 선택'} · 후보{' '}
+                  {election.voteMode === 'ranked' ? '순위투표' : '단순 선택'} · 선택지{' '}
                   {election.candidates?.length || 0}명 · {fmtDate(election.createdAt)}
                 </p>
               </div>
@@ -208,7 +208,7 @@ function AdminBoard() {
                   setConfirm({ kind: 'election', election, label: election.name })
                 }
               >
-                🗑️ 선거 삭제
+                🗑️ 투표 삭제
               </button>
             </div>
           </div>
@@ -226,7 +226,7 @@ function AdminBoard() {
             <p className="text-sm text-slate-600 mt-2">
               <b>{confirm.label}</b>
               {confirm.kind === 'election'
-                ? ' 선거와 모든 반·투표 기록이 영구 삭제됩니다.'
+                ? ' 투표와 모든 반·투표 기록이 영구 삭제됩니다.'
                 : ' 반과 해당 반의 투표 기록이 영구 삭제됩니다.'}
               <br />이 작업은 되돌릴 수 없습니다.
             </p>

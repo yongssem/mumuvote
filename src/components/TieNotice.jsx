@@ -12,7 +12,7 @@ export default function TieNotice({ tied, rule, note, seats }) {
     <div className="card p-5 mt-6 border-amber-400 bg-amber-50">
       <p className="font-black text-lg text-amber-800">⚖️ 동점이 나왔습니다</p>
       <p className="text-sm text-slate-700 mt-1">
-        {seats}명을 뽑는데 <b>{names}</b> 이(가) 같은 점수예요. 그대로는 당선자를 가릴 수 없습니다.
+        {seats}개를 정하는데 <b>{names}</b> 이(가) 같은 점수예요. 그대로는 최종 선택지를 가릴 수 없습니다.
       </p>
 
       <div className="mt-3 rounded-xl bg-white border-2 border-amber-300 p-3">
@@ -28,8 +28,8 @@ export default function TieNotice({ tied, rule, note, seats }) {
 
       <p className="text-xs text-slate-500 mt-2">
         {decided
-          ? '이 기준에 따라 처리한 뒤 당선자를 확정하세요. (앱이 자동으로 정하지 않습니다)'
-          : '다음 선거에서는 투표 전에 기준을 정해두면 뒷말이 없어요.'}
+          ? '이 기준에 따라 처리한 뒤 최종 선택지를 확정하세요. (앱이 자동으로 정하지 않습니다)'
+          : '다음 투표에서는 투표 전에 기준을 정해두면 뒷말이 없어요.'}
       </p>
     </div>
   )

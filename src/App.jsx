@@ -1,25 +1,27 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
-import Splash from './components/Splash'
 import SoundToggle from './components/SoundToggle'
 import Landing from './pages/Landing'
-import ElectionList from './pages/ElectionList'
-import ElectionNew from './pages/ElectionNew'
-import ClassSetup from './pages/ClassSetup'
-import Candidates from './pages/Candidates'
-import Voting from './pages/Voting'
-import SelfVote from './pages/SelfVote'
-import Results from './pages/Results'
-import ResultsAll from './pages/ResultsAll'
-import SuperAdmin from './pages/SuperAdmin'
+import Guide from './pages/Guide'
+const ElectionList = lazy(() => import('./pages/ElectionList'))
+const ElectionNew = lazy(() => import('./pages/ElectionNew'))
+const ClassSetup = lazy(() => import('./pages/ClassSetup'))
+const Candidates = lazy(() => import('./pages/Candidates'))
+const Voting = lazy(() => import('./pages/Voting'))
+const SelfVote = lazy(() => import('./pages/SelfVote'))
+const Results = lazy(() => import('./pages/Results'))
+const ResultsAll = lazy(() => import('./pages/ResultsAll'))
+const SuperAdmin = lazy(() => import('./pages/SuperAdmin'))
 
 // 무무보트 라우팅
 export default function App() {
   return (
     <>
-      <Splash />
       <SoundToggle />
+      <Suspense fallback={<div className="p-8 text-center" role="status">화면을 불러오는 중…</div>}>
       <Routes>
       <Route path="/" element={<Landing />} />
+      <Route path="/guide" element={<Guide />} />
       <Route path="/elections" element={<ElectionList />} />
       <Route path="/elections/new" element={<ElectionNew />} />
       <Route path="/elections/:id/class" element={<ClassSetup />} />
@@ -34,6 +36,7 @@ export default function App() {
       <Route path="/admin" element={<SuperAdmin />} />
       <Route path="*" element={<Landing />} />
       </Routes>
+      </Suspense>
     </>
   )
 }

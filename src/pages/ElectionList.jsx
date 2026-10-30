@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Page from '../components/Page'
 import { listMyElections, findElectionsByCode } from '../lib/elections'
 
-// 선거 선택 — 이 기기에서 만든 선거는 바로 보이고, 다른 선거는 4자리 코드로 찾는다.
+// 투표 선택 — 이 기기에서 만든 투표는 바로 보이고, 다른 투표는 4자리 코드로 찾는다.
 export default function ElectionList() {
   const nav = useNavigate()
   const [mine, setMine] = useState(null)
@@ -21,7 +21,7 @@ export default function ElectionList() {
       })
   }, [])
 
-  // 코드로 선거 찾기
+  // 코드로 투표 찾기
   async function search() {
     if (code.length !== 4) return
     setSearching(true)
@@ -30,7 +30,7 @@ export default function ElectionList() {
     try {
       const rows = await findElectionsByCode(code)
       if (rows.length === 0) {
-        setErr('그 코드를 가진 선거가 없어요. 코드를 다시 확인해 주세요.')
+        setErr('그 코드를 가진 투표가 없어요. 코드를 다시 확인해 주세요.')
       } else if (rows.length === 1) {
         nav(`/elections/${rows[0].id}/class`)
       } else {
@@ -47,14 +47,14 @@ export default function ElectionList() {
 
   return (
     <Page
-      title="선거 선택"
-      subtitle="이 기기에서 만든 선거가 보여요. 다른 선거는 4자리 코드로 찾을 수 있어요."
+      title="투표 선택"
+      subtitle="이 기기에서 만든 투표가 보여요. 다른 투표는 4자리 코드로 찾을 수 있어요."
     >
       {/* 코드로 찾기 */}
       <div className="card p-5">
-        <label className="label">4자리 코드로 선거 찾기</label>
-        <p className="text-xs text-slate-400 mb-2">
-          다른 기기에서 만든 선거는 선생님께 받은 <b>4자리 코드</b>를 입력해 들어갑니다.
+        <label className="label">4자리 코드로 투표 찾기</label>
+        <p className="text-xs text-slate-500 mb-2">
+          다른 기기에서 만든 투표는 선생님께 받은 <b>4자리 코드</b>를 입력해 들어갑니다.
         </p>
         <div className="flex flex-col sm:flex-row gap-2">
           <input
@@ -68,6 +68,7 @@ export default function ElectionList() {
               setCode(e.target.value.replace(/\D/g, '').slice(0, 4))
             }}
             onKeyDown={(e) => e.key === 'Enter' && search()}
+            aria-label="4자리 접속 코드"
             placeholder="0000"
           />
           <button
@@ -84,7 +85,7 @@ export default function ElectionList() {
         {found && (
           <div className="mt-4">
             <p className="text-sm text-slate-500 mb-2">
-              같은 코드의 선거가 {found.length}개 있어요. 들어갈 선거를 골라주세요.
+              같은 코드의 투표가 {found.length}개 있어요. 들어갈 투표를 골라주세요.
             </p>
             <div className="space-y-2">
               {found.map((e) => (
@@ -95,8 +96,8 @@ export default function ElectionList() {
                 >
                   <h3 className="font-bold">{e.name}</h3>
                   <p className="text-sm text-slate-500 mt-0.5">
-                    후보 {e.candidates?.length || 0}명 ·{' '}
-                    {e.voteMode === 'ranked' ? '순위투표(1·2·3등)' : '단순 선택'} ·{' '}
+                    선택지 {e.candidates?.length || 0}개 ·{' '}
+                    {e.voteMode === 'ranked' ? '순위투표' : '단순 선택'} ·{' '}
                     {fmtDate(e.createdAt)}
                   </p>
                 </button>
@@ -106,24 +107,24 @@ export default function ElectionList() {
         )}
       </div>
 
-      {/* 내가 만든 선거 */}
+      {/* 내가 만든 투표 */}
       <div className="flex items-center justify-between mt-8 mb-3">
-        <h2 className="font-bold text-lg">이 기기에서 만든 선거</h2>
+        <h2 className="font-bold text-lg">이 기기에서 만든 투표</h2>
         <button className="btn-primary" onClick={() => nav('/elections/new')}>
-          + 새 선거 등록
+          + 새 투표 만들기
         </button>
       </div>
 
-      {mine === null && <p className="text-slate-400">불러오는 중…</p>}
+      {mine === null && <p className="text-slate-500">불러오는 중…</p>}
 
       {mine && mine.length === 0 && (
         <div className="card p-10 text-center">
           <p className="text-slate-500">
-            이 기기에서 만든 선거가 아직 없어요.
-            <br />새 선거를 등록하거나, 위에서 <b>코드로 찾아</b> 들어가세요.
+            이 기기에서 만든 투표가 아직 없어요.
+            <br />새 투표를 등록하거나, 위에서 <b>코드로 찾아</b> 들어가세요.
           </p>
           <button className="btn-primary mt-4" onClick={() => nav('/elections/new')}>
-            첫 선거 등록하기
+            첫 투표 등록하기
           </button>
         </div>
       )}
@@ -141,13 +142,13 @@ export default function ElectionList() {
                   {e.name}
                 </h3>
                 <p className="text-sm text-slate-500 mt-1">
-                  후보 {e.candidates?.length || 0}명 ·{' '}
-                  {e.voteMode === 'ranked' ? '순위투표(1·2·3등)' : '단순 선택'}
+                  선택지 {e.candidates?.length || 0}개 ·{' '}
+                  {e.voteMode === 'ranked' ? '순위투표' : '단순 선택'}
                 </p>
               </div>
-              {/* 내 선거이므로 코드를 바로 보여준다 (공유용) */}
+              {/* 내 투표이므로 코드를 바로 보여준다 (공유용) */}
               <div className="text-right shrink-0">
-                <span className="block text-[11px] text-slate-400">코드</span>
+                <span className="block text-[11px] text-slate-500">코드</span>
                 <span className="font-mono font-black text-lg tracking-[0.2em] text-primary">
                   {e.code}
                 </span>
@@ -157,8 +158,8 @@ export default function ElectionList() {
         ))}
       </div>
 
-      <p className="text-xs text-slate-400 mt-6">
-        ※ 선거는 서버에 저장돼 있어요. 기기를 바꾸거나 목록에서 사라져도{' '}
+      <p className="text-xs text-slate-500 mt-6">
+        ※ 투표는 서버에 저장돼 있어요. 기기를 바꾸거나 목록에서 사라져도{' '}
         <b>4자리 코드로 언제든 다시 들어갈 수 있습니다.</b>
       </p>
     </Page>

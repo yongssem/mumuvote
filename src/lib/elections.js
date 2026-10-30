@@ -23,7 +23,7 @@ import {
 } from 'firebase/firestore'
 
 const ROOT = 'mumuvote_elections'
-const MINE_KEY = 'mumuvote_my_elections' // 이 기기에서 만든 선거 id 목록
+const MINE_KEY = 'mumuvote_my_elections' // 이 기기에서 만든 투표 id 목록
 
 // 4자리 코드 무작위 생성 (앞자리 0 유지)
 export function randomCode() {
@@ -31,7 +31,7 @@ export function randomCode() {
 }
 
 // 아직 쓰이지 않은 4자리 코드 생성 (중복 방지)
-// 4자리는 경우의 수가 9000뿐이라, 선거가 100개만 넘어도 우연히 겹칠 확률이 꽤 높다.
+// 4자리는 경우의 수가 9000뿐이라, 투표가 100개만 넘어도 우연히 겹칠 확률이 꽤 높다.
 export async function randomUnusedCode(tries = 12) {
   for (let i = 0; i < tries; i++) {
     const c = randomCode()
@@ -40,7 +40,7 @@ export async function randomUnusedCode(tries = 12) {
   return randomCode() // 극단적인 경우엔 그냥 반환(생성 시 최종 검사에서 걸러짐)
 }
 
-// 해당 코드를 쓰는 선거들 조회 (코드로 찾기 · 중복 검사)
+// 해당 코드를 쓰는 투표들 조회 (코드로 찾기 · 중복 검사)
 export async function findElectionsByCode(code) {
   const snap = await getDocs(query(collection(db, ROOT), where('code', '==', code)))
   const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
@@ -52,7 +52,7 @@ export async function isCodeTaken(code) {
   return (await findElectionsByCode(code)).length > 0
 }
 
-// ── 이 기기에서 만든 선거 (localStorage) ───────────────
+// ── 이 기기에서 만든 투표 (localStorage) ───────────────
 function readMineIds() {
   try {
     const raw = localStorage.getItem(MINE_KEY)
@@ -79,7 +79,7 @@ export function forgetMyElection(id) {
   writeMineIds(readMineIds().filter((x) => x !== id))
 }
 
-// 이 기기에서 만든 선거 목록. 삭제된 선거는 자동으로 정리한다.
+// 이 기기에서 만든 투표 목록. 삭제된 투표는 자동으로 정리한다.
 export async function listMyElections() {
   const ids = readMineIds()
   if (ids.length === 0) return []
@@ -94,19 +94,19 @@ export function uid() {
   return crypto.randomUUID()
 }
 
-// ── 선거 ──────────────────────────────────────────────
+// ── 투표 ──────────────────────────────────────────────
 export async function createElection({ name, code, voteMode, candidates, seats, tieRule, picks }) {
   const ref = await addDoc(collection(db, ROOT), {
     name,
     code,
     voteMode, // "ranked" | "single"
     candidates, // [{ id, number, name, slogan, pledges, posterUrl }]
-    picks: picks || (voteMode === 'ranked' ? 3 : 1), // 한 사람이 고르는 후보 수
-    seats: seats || 1, // 선출 인원 (몇 명을 뽑는지)
+    picks: picks || (voteMode === 'ranked' ? 3 : 1), // 한 사람이 고르는 선택지 수
+    seats: seats || 1, // 선정할 선택지 수 (몇 명을 뽑는지)
     tieRule: tieRule || { type: 'none', note: '' }, // 동점 처리 기준 (사전 약속)
     createdAt: serverTimestamp(),
   })
-  rememberMyElection(ref.id) // 이 기기의 "내 선거" 목록에 추가
+  rememberMyElection(ref.id) // 이 기기의 "내 투표" 목록에 추가
   return ref.id
 }
 
@@ -138,7 +138,7 @@ export async function getClass(electionId, classId) {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null
 }
 
-// 한 선거의 모든 반 목록 (합산 결과용)
+// 한 투표의 모든 반 목록 (합산 결과용)
 export async function listClasses(electionId) {
   const snap = await getDocs(collection(db, ROOT, electionId, 'classes'))
   const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
@@ -183,7 +183,7 @@ export function subscribeVotedIds(electionId, classId, cb) {
   )
 }
 
-// 선거 전체(모든 반)의 투표지를 반별로 수집 (합산 결과용)
+// 투표 전체(모든 반)의 투표지를 반별로 수집 (합산 결과용)
 export async function getAllBallots(electionId) {
   const classes = await listClasses(electionId)
   const out = []
@@ -204,16 +204,16 @@ export async function deleteClass(electionId, classId) {
   await deleteDoc(doc(db, ROOT, electionId, 'classes', classId))
 }
 
-// 선거 삭제 — 하위 반·투표지까지 재귀 정리 후 선거 문서 삭제
+// 투표 삭제 — 하위 반·투표지까지 재귀 정리 후 투표 문서 삭제
 // (Firestore는 하위 컬렉션을 자동 삭제하지 않으므로 직접 지운다.)
 export async function deleteElection(electionId) {
   const csnap = await getDocs(collection(db, ROOT, electionId, 'classes'))
   for (const c of csnap.docs) await deleteClass(electionId, c.id)
   await deleteDoc(doc(db, ROOT, electionId))
-  forgetMyElection(electionId) // 이 기기의 "내 선거" 목록에서도 제거
+  forgetMyElection(electionId) // 이 기기의 "내 투표" 목록에서도 제거
 }
 
-// 관리자용 선거별 현황 요약 (반 수 / 투표인단 수 / 투표 수)
+// 관리자용 투표별 현황 요약 (반 수 / 투표인단 수 / 투표 수)
 export async function getElectionStats(electionId) {
   const groups = await getAllBallots(electionId)
   const classCount = groups.length
@@ -222,87 +222,4 @@ export async function getElectionStats(electionId) {
   return { classCount, voterCount, voteCount, groups }
 }
 
-// ── 결과 집계 ────────────────────────────────────────
-// ranked: 1등 3점 / 2등 2점 / 3등 1점, single: 1표당 1점
-// 한 사람이 몇 명을 고르는지 (기본: 순위투표 3명, 단순 선택 1명)
-export function picksOf(election) {
-  return Math.max(1, election?.picks || (election?.voteMode === 'ranked' ? 3 : 1))
-}
-
-// 투표지에서 고른 후보 id를 순서대로 꺼낸다.
-// 예전 형식(first/second/third, choice)도 그대로 읽어 하위 호환을 지킨다.
-export function ballotPicks(ballot) {
-  if (Array.isArray(ballot?.picks)) return ballot.picks.filter(Boolean)
-  if (ballot?.choice) return [ballot.choice]
-  return [ballot?.first, ballot?.second, ballot?.third].filter(Boolean)
-}
-
-// 순위별 배점 — 순위투표는 N등이 (뽑는수 - 등수 + 1)점, 단순 선택은 모두 1점
-export function weightAt(election, index) {
-  return election?.voteMode === 'ranked' ? picksOf(election) - index : 1
-}
-
-export function tally(election, ballots) {
-  const n = picksOf(election)
-  const scores = {}
-  for (const c of election.candidates) {
-    scores[c.id] = { candidate: c, points: 0, rankCounts: Array(n).fill(0) }
-  }
-  for (const b of ballots) {
-    ballotPicks(b).forEach((id, i) => {
-      if (i >= n || !scores[id]) return
-      scores[id].points += weightAt(election, i)
-      scores[id].rankCounts[i]++
-    })
-  }
-  return Object.values(scores).sort((a, b) => b.points - a.points)
-}
-
-// ── 당선자 판정 ──────────────────────────────────────
-// 상위 seats명을 당선으로 본다. 커트라인에 동점이 걸리면 사전에 정한 기준으로 처리.
-export const TIE_RULES = {
-  none: '정하지 않음',
-  firstVotes: '1등표를 더 많이 받은 후보',
-  runoff: '해당 후보들만 재투표(결선)',
-  lottery: '추첨(제비뽑기)',
-  elder: '생일이 빠른 후보',
-  custom: '직접 정한 기준',
-}
-
-export function decideWinners(election, rows) {
-  const seats = Math.max(1, Math.min(election.seats || 1, rows.length))
-  const rule = election.tieRule?.type || 'none'
-  const ranked = election.voteMode === 'ranked'
-
-  // 자동으로 가릴 수 있는 기준(1등표 비교)은 여기서 반영한다.
-  const sorted = [...rows]
-  if (rule === 'firstVotes' && ranked) {
-    sorted.sort((a, b) => b.points - a.points || b.rankCounts[0] - a.rankCounts[0])
-  }
-
-  const winners = sorted.slice(0, seats)
-  const boundary = sorted[seats - 1]
-  const next = sorted[seats]
-
-  // 커트라인(마지막 당선자 ↔ 첫 낙선자)이 같은 점수면 동점 상황
-  let tied = []
-  if (boundary && next && boundary.points === next.points) {
-    const brokeByFirst =
-      rule === 'firstVotes' && ranked && boundary.rankCounts[0] !== next.rankCounts[0]
-    if (!brokeByFirst) {
-      tied = sorted.filter((r) => r.points === boundary.points)
-    }
-  }
-
-  return { seats, sorted, winners, tied, rule }
-}
-
-// 결과 화면 등에 쓰는 방식 요약 문구
-export function modeLabel(election) {
-  const n = picksOf(election)
-  if (election?.voteMode === 'ranked') {
-    const w = Array.from({ length: n }, (_, i) => `${i + 1}등 ${n - i}점`).join('·')
-    return `순위투표 ${n}명 선택 (${w} 합산)`
-  }
-  return n === 1 ? '단순 선택 (득표수)' : `단순 선택 ${n}명 (각 1표)`
-}
+export { picksOf, ballotPicks, weightAt, tally, TIE_RULES, decideWinners, modeLabel } from './tally'
