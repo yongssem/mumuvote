@@ -40,7 +40,7 @@ export default function RevealCountdown({ title = '결과 발표', onDone }) {
           // 숫자 카운트다운 (매번 새 key로 애니메이션 재시작)
           <div
             key={step}
-            className="animate-count mx-auto w-40 h-40 sm:w-52 sm:h-52 rounded-[2rem] bg-white border-[5px] border-ink shadow-[12px_12px_0_0_#0F172A] flex items-center justify-center"
+            className="animate-count mx-auto w-40 h-40 sm:w-52 sm:h-52 rounded-[2rem] bg-paper border-[5px] border-ink shadow-[12px_12px_0_0_#342C21] flex items-center justify-center"
           >
             <span className="text-8xl sm:text-9xl font-black text-ink tabular-nums">{step}</span>
           </div>

@@ -234,12 +234,12 @@ function BoxGraphic({ count, sealed }) {
   return (
     <div className="relative w-56 h-48 mx-auto">
       {/* 뚜껑 + 투입구 */}
-      <div className="absolute inset-x-2 top-4 h-9 rounded-xl bg-primary border-[3px] border-ink shadow-[4px_4px_0_0_#0F172A] flex items-center justify-center">
+      <div className="absolute inset-x-2 top-4 h-9 rounded-xl bg-primary border-[3px] border-ink shadow-[4px_4px_0_0_#342C21] flex items-center justify-center">
         <div className="w-24 h-2.5 rounded-full bg-ink" />
       </div>
 
       {/* 투명 함 본체 */}
-      <div className="absolute inset-x-0 top-12 bottom-0 rounded-2xl border-[3px] border-ink bg-sky-100/60 shadow-[6px_6px_0_0_#0F172A] overflow-hidden">
+      <div className="absolute inset-x-0 top-12 bottom-0 rounded-2xl border-[3px] border-ink bg-sky-100/60 shadow-[6px_6px_0_0_#342C21] overflow-hidden">
         <span className="absolute inset-x-0 top-2 text-center text-[11px] font-black tracking-[0.25em] text-ink/35">
           투 표 함
         </span>
@@ -247,7 +247,7 @@ function BoxGraphic({ count, sealed }) {
         {Array.from({ length: papers }, (_, i) => (
           <div
             key={i}
-            className="absolute w-[74px] h-[26px] bg-white border-2 border-slate-300 rounded"
+            className="absolute w-[74px] h-[26px] bg-paper border-2 border-slate-300 rounded"
             style={{
               left: `${10 + (i % 3) * 25}%`,
               bottom: 6 + Math.floor(i / 3) * 17,
@@ -258,13 +258,13 @@ function BoxGraphic({ count, sealed }) {
       </div>
 
       {sealed && (
-        <span className="absolute -right-2 top-8 rotate-12 bg-red-500 text-white text-[11px] font-black px-2 py-1 rounded border-2 border-ink shadow-[2px_2px_0_0_#0F172A]">
+        <span className="absolute -right-2 top-8 rotate-12 bg-red-500 text-white text-[11px] font-black px-2 py-1 rounded border-2 border-ink shadow-[2px_2px_0_0_#342C21]">
           봉인
         </span>
       )}
 
       {/* 남은 장수 */}
-      <span className="absolute -left-2 bottom-2 bg-white border-2 border-ink rounded-full px-2.5 py-0.5 text-xs font-black shadow-[2px_2px_0_0_#0F172A]">
+      <span className="absolute -left-2 bottom-2 bg-paper border-2 border-ink rounded-full px-2.5 py-0.5 text-xs font-black shadow-[2px_2px_0_0_#342C21]">
         {count}장
       </span>
     </div>
@@ -276,7 +276,7 @@ function Ballot({ ranked, data, find, seq }) {
   const rows = (data.picks || []).map((cid, i) => [ranked ? `${i + 1}등` : '선택', cid])
 
   return (
-    <div className="animate-ballot bg-white border-[3px] border-ink rounded-xl shadow-[6px_6px_0_0_#0F172A] px-5 py-4 w-full max-w-xs">
+    <div className="animate-ballot bg-paper border-[3px] border-ink rounded-xl shadow-[6px_6px_0_0_#342C21] px-5 py-4 w-full max-w-xs">
       <div className="flex items-center justify-between border-b-2 border-dashed border-slate-300 pb-2 mb-3">
         <span className="text-[11px] font-black tracking-[0.15em] text-slate-500">투표용지</span>
         <span className="text-[11px] text-slate-400">제 {seq} 호</span>

@@ -15,7 +15,7 @@ export default function TieNotice({ tied, rule, note, seats }) {
         {seats}개를 정하는데 <b>{names}</b> 이(가) 같은 점수예요. 그대로는 최종 선택지를 가릴 수 없습니다.
       </p>
 
-      <div className="mt-3 rounded-xl bg-white border-2 border-amber-300 p-3">
+      <div className="mt-3 rounded-xl bg-paper border-2 border-amber-300 p-3">
         <p className="text-xs font-bold text-slate-500 mb-0.5">투표 전에 정해둔 기준</p>
         {decided ? (
           <p className="font-bold text-ink">{label}</p>

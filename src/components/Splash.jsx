@@ -24,14 +24,14 @@ export default function Splash() {
       aria-label="시작"
     >
       {/* 떠다니는 배경 도형 (부르탈리즘 하드 그림자) */}
-      <div className="absolute -left-8 top-16 w-24 h-24 rounded-2xl bg-accent border-2 border-ink shadow-[6px_6px_0_0_#0F172A] animate-blob" />
+      <div className="absolute -left-8 top-16 w-24 h-24 rounded-2xl bg-accent border-2 border-ink shadow-[6px_6px_0_0_#342C21] animate-blob" />
       <div
-        className="absolute right-6 bottom-24 w-16 h-16 rounded-full bg-white border-2 border-ink shadow-[6px_6px_0_0_#0F172A] animate-blob"
+        className="absolute right-6 bottom-24 w-16 h-16 rounded-full bg-paper border-2 border-ink shadow-[6px_6px_0_0_#342C21] animate-blob"
         style={{ animationDelay: '1.2s' }}
       />
 
-      <div className="animate-pop relative bg-white border-[3px] border-ink rounded-[28px] shadow-[10px_10px_0_0_#0F172A] px-10 py-12 text-center max-w-[86vw]">
-        <div className="animate-stamp inline-flex w-20 h-20 rounded-2xl bg-accent border-[3px] border-ink items-center justify-center text-4xl shadow-[4px_4px_0_0_#0F172A]">
+      <div className="animate-pop relative bg-paper border-[3px] border-ink rounded-[28px] shadow-[10px_10px_0_0_#342C21] px-10 py-12 text-center max-w-[86vw]">
+        <div className="animate-stamp inline-flex w-20 h-20 rounded-2xl bg-accent border-[3px] border-ink items-center justify-center text-4xl shadow-[4px_4px_0_0_#342C21]">
           🗳️
         </div>
         <h1 className="text-5xl font-black mt-6 tracking-tight text-ink">무무투표</h1>
