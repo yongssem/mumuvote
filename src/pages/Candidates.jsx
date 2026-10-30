@@ -96,7 +96,7 @@ export default function Candidates() {
             </p>
             <div className="flex flex-col sm:flex-row gap-2 mt-3">
               <input
-                className="input flex-1 text-sm font-mono bg-white"
+                className="input flex-1 text-sm font-mono bg-paper"
                 readOnly
                 value={selfLink}
                 onFocus={(e) => e.target.select()}

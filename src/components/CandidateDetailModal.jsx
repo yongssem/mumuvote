@@ -9,7 +9,7 @@ export default function CandidateDetailModal({ candidate: c, onClose }) {
       onClick={onClose}
     >
       <div
-        className={`card w-full ${hasPoster ? 'max-w-5xl' : 'max-w-lg'} max-h-[90vh] overflow-y-auto md:overflow-hidden`}
+        className={`card detail-dialog w-full ${hasPoster ? 'max-w-5xl' : 'max-w-lg'} max-h-[90vh] overflow-y-auto md:overflow-hidden`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className={hasPoster ? 'md:grid md:grid-cols-2 md:max-h-[90vh]' : ''}>

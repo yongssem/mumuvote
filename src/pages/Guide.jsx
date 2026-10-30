@@ -21,9 +21,9 @@ export default function Guide() {
   </div>
   <ol className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6" aria-label="연습 단계">{steps.map(([title],i)=><li key={title}><button onClick={()=>setStep(i)} aria-current={i===step?'step':undefined} className={'guide-step ' + (i===step?'guide-step-active':'')}><span className="text-xs opacity-70">0{i+1}</span><span>{title}</span></button></li>)}</ol>
   <div className="grid md:grid-cols-[1fr_1.4fr] gap-6">
-   <section className="rounded-3xl bg-indigo-950 text-white p-6 sm:p-8">
+   <section className="guide-explainer text-white p-6 sm:p-8">
     <p className="text-indigo-200 text-sm font-bold">STEP 0{step+1} / 04</p><h2 className="text-2xl font-extrabold mt-5">{steps[step][0]}</h2><p className="text-indigo-100 leading-relaxed mt-4">{steps[step][1]}</p>
-    <div className="mt-8 rounded-2xl bg-white/10 p-4 text-sm leading-relaxed">{[
+    <div className="mt-8 rounded-2xl bg-indigo-900 border border-indigo-300 p-4 text-sm leading-relaxed">{[
      '단순 선택은 정해진 개수만큼 고르고, 순위투표는 선호하는 순서대로 골라요. 여러 개를 고르는 경우 모두 골라야 제출할 수 있어요.',
      '4자리 코드는 다른 기기에서 같은 투표를 찾을 때 사용해요. 학생의 개인 참여 링크는 명단 등록 후 선택지 화면에서 복사해요.',
      '이 연습에서는 단순 선택 한 표를 보내요. 실제 투표도 선택 내용을 확인하고 제출하세요.',

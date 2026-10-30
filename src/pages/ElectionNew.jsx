@@ -137,7 +137,7 @@ export default function ElectionNew() {
   return (
     <Page title="새 투표 만들기" subtitle="함께 정할 주제와 선택지를 입력하세요. 사진과 상세 설명은 선택 사항이에요.">
       <div className="space-y-6">
-        <div className="rounded-2xl bg-indigo-50 border border-indigo-100 p-4 text-sm text-indigo-950">① 주제와 선택지 → ② 우리 반 명단 → ③ 투표 진행 → ④ 결과 확인</div>
+        <div className="ink-banner p-4 text-sm text-indigo-950">① 주제와 선택지 → ② 우리 반 명단 → ③ 투표 진행 → ④ 결과 확인</div>
         {/* 기본 정보 */}
         <div className="card p-5 space-y-4">
           <div>
@@ -459,11 +459,8 @@ function ModeBtn({ active, onClick, children }) {
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-xl px-3 py-2.5 text-sm font-semibold border transition ${
-        active
-          ? 'border-primary bg-primary/5 text-primary'
-          : 'border-slate-200 text-slate-500 hover:bg-slate-50'
-      }`}
+      aria-pressed={active}
+      className="mode-button"
     >
       {children}
     </button>
